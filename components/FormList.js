@@ -15,7 +15,7 @@ function FormList({ forms, deleteForm }) {
                 </thead>
                 <tbody className="">
                     {forms.map((form) => (
-                        <FormItem deleteFromLocal={deleteForm} form={form} />
+                        <FormItem key={form.formId} deleteFromLocal={deleteForm} form={form} />
                     ))}
                 </tbody>
             </table>

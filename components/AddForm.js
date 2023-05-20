@@ -89,7 +89,10 @@ function AddForm({ addLocalForm, handleClose }) {
                     {fields.map((field) => {
                         if (field.tableType === 'basics') {
                             return (
-                                <div className="w-[90%] flex flex-row mt-4 items-center justify-between">
+                                <div
+                                    key={field.formId}
+                                    className="w-[90%] flex flex-row mt-4 items-center justify-between"
+                                >
                                     <input
                                         type="text"
                                         value={field.ninoxField}
@@ -130,7 +133,10 @@ function AddForm({ addLocalForm, handleClose }) {
                     {fields.map((field) => {
                         if (field.tableType === 'prFb') {
                             return (
-                                <div className="w-[90%] flex flex-row mt-4 items-center justify-between">
+                                <div
+                                    key={field.formId}
+                                    className="w-[90%] flex flex-row mt-4 items-center justify-between"
+                                >
                                     <input
                                         type="text"
                                         value={field.ninoxField}
