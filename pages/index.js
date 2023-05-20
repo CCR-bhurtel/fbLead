@@ -52,6 +52,7 @@ function Login() {
                 localStorage.setItem('token', resData.token);
                 toast.success('Logged in successfully');
                 dispatch('LOGGED_IN', { token: resData.token });
+                router.push('/history');
             })
             .catch((err) => {
                 console.log(err);
