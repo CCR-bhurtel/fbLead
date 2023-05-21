@@ -106,6 +106,15 @@ function AddForm({ addLocalForm, handleClose }) {
             <form onSubmit={handleSubmit} className="w-100 flex flex-col items-center justify-center">
                 <input
                     type="text"
+                    name="formId"
+                    onChange={handleDataChange}
+                    value={data.formId}
+                    placeholder="Form id"
+                    required
+                    className="outline-0 border-[0.5px] mt-4 border-gray-400 rounded-md focus:border rounde-md focus:border-blue-300 w-[90%] p-[10px]"
+                />
+                <input
+                    type="text"
                     name="formName"
                     onChange={handleDataChange}
                     value={data.formName}
@@ -114,15 +123,6 @@ function AddForm({ addLocalForm, handleClose }) {
                     className="outline-0 border-[0.5px] mt-4 border-gray-400 focus:border rounded-md focus:border-blue-300 w-[90%] p-[10px]"
                 />
 
-                <input
-                    type="text"
-                    name="formId"
-                    onChange={handleDataChange}
-                    value={data.formId}
-                    placeholder="Form id"
-                    required
-                    className="outline-0 border-[0.5px] mt-4 border-gray-400 rounded-md focus:border rounde-md focus:border-blue-300 w-[90%] p-[10px]"
-                />
                 {formIdVerified && (
                     <>
                         <span className="ml-2 text-green-500">Form Verified</span>
