@@ -14,6 +14,18 @@ function AddForm({ addLocalForm, handleClose }) {
 
     const [facebookFields, setFacebookFields] = useState([]);
 
+    const anagraFicheFields = ['Nome', 'Cognome', 'Email', 'Phone'];
+    const prFbFields = [
+        'Nome',
+        'Cognome',
+        'Email',
+        'Phone',
+        'Città di Partenza',
+        'Tipi di Camera',
+        'Periodo Soggiorno',
+        'Note Richiesta',
+    ];
+
     const handleFormIdChange = () => {
         const token = localStorage.getItem('token');
 
@@ -38,7 +50,7 @@ function AddForm({ addLocalForm, handleClose }) {
         const newFields = fields.concat({
             id: uuidv4(),
             facebookField: facebookFields[0].key,
-            ninoxField: '',
+            ninoxField: 'Nome',
             tableType: type,
         });
         setFields(newFields);
@@ -124,7 +136,7 @@ function AddForm({ addLocalForm, handleClose }) {
                                             key={field.formId}
                                             className="w-[90%] flex flex-row mt-4 items-center justify-between"
                                         >
-                                            <input
+                                            <select
                                                 type="text"
                                                 value={field.ninoxField}
                                                 name="ninoxField"
@@ -132,7 +144,16 @@ function AddForm({ addLocalForm, handleClose }) {
                                                 required
                                                 onChange={(e) => handleFieldDataChange(e, field.id)}
                                                 className="outline-0 border-[0.5px]  border-gray-400 focus:border rounded-md focus:border-blue-300  p-[10px]"
-                                            />
+                                            >
+                                                <option disabled className="text-black">
+                                                    Select Anagrafiche fields
+                                                </option>
+                                                {anagraFicheFields.map((field) => (
+                                                    <option key={field} value={field}>
+                                                        {field}
+                                                    </option>
+                                                ))}
+                                            </select>
 
                                             <select
                                                 type="text"
@@ -182,7 +203,7 @@ function AddForm({ addLocalForm, handleClose }) {
                                             key={field.formId}
                                             className="w-[90%] flex flex-row mt-4 items-center justify-between"
                                         >
-                                            <input
+                                            <select
                                                 type="text"
                                                 value={field.ninoxField}
                                                 name="ninoxField"
@@ -190,7 +211,16 @@ function AddForm({ addLocalForm, handleClose }) {
                                                 required
                                                 onChange={(e) => handleFieldDataChange(e, field.id)}
                                                 className="outline-0 border-[0.5px]  border-gray-400 focus:border rounded-md focus:border-blue-300  p-[10px]"
-                                            />
+                                            >
+                                                <option disabled className="text-black">
+                                                    Select Pr Fb field
+                                                </option>
+                                                {prFbFields.map((field) => (
+                                                    <option key={field} value={field}>
+                                                        {field}
+                                                    </option>
+                                                ))}
+                                            </select>
 
                                             <select
                                                 type="text"
