@@ -38,3 +38,4 @@ next-env.d.ts
 test-dep.js
 test.js
 test1.js
+config.env
