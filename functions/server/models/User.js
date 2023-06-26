@@ -51,4 +51,6 @@ userSchema.methods.changedPasswordAfter = catchAsync(async function (JWTTimestam
     return false;
 });
 
-module.exports = User = mongoose.model('User', userSchema);
+const User = mongoose.model('User', userSchema);
+
+module.exports = User;

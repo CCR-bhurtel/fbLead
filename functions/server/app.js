@@ -12,6 +12,8 @@ const errorController = require('./controllers/errorController');
 const path = require('path');
 const ninoxRouter = require('./Routes/ninox');
 const respondRouter = require('./Routes/respond');
+const webhookController = require('./controllers/respondIo/webhookController');
+const priceMediumRouter = require('./Routes/pricemedium');
 
 const app = express();
 
@@ -24,7 +26,8 @@ app.use('/api/user', userRouter);
 app.use('/api/form', authProtect, formRouter);
 app.use('/api/data', ninoxRouter);
 
-app.use('/api/respond', respondRouter);
+app.use('/api/respond', authProtect, respondRouter);
+app.post('/api/respondwebhook', webhookController);
 
 app.use(cors({ origin: ['*'] }));
 
@@ -47,6 +50,8 @@ app.get('/privacypolicy', (req, res) => {
 app.get('/tos', (req, res) => {
     return res.send('<h2>Terms of service</h2>');
 });
+
+app.use('/pricemedium', priceMediumRouter);
 app.post('/facebookwebhook', facebookWebhookController);
 
 app.post('/ninoxwebhook', ninoxWebHookController);

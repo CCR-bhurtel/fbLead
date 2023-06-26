@@ -10,6 +10,7 @@ const { parse } = require('url');
 
 const server = require('./server/app');
 const duplicatePrevent = require('./duplicatePrevent');
+const fetchData = require('./server/utils/fetchData');
 // const { PORT } = require('./config/keys');
 const app = next({ dev: false });
 const handle = app.getRequestHandler();
@@ -20,13 +21,22 @@ app.prepare().then(() => {
     });
 
     connectDB().catch((err) => console.log(err));
+    cron.schedule('0 0 * * *', async () => {
+        try {
+            await fetchData();
 
-    cron.schedule('0 16 * * *', () => {
-        duplicatePrevent().catch((err) => {
-            console.log(err);
-        });
-        // Add your code here to perform the desired task
+            console.log('Data updated successfully');
+        } catch (error) {
+            console.error('Error occurred while updating data:', error);
+        }
     });
+
+    // cron.schedule('0 16 * * *', () => {
+    //     duplicatePrevent().catch((err) => {
+    //         console.log(err);
+    //     });
+    //     // Add your code here to perform the desired task
+    // });
 });
 exports.nextServer = onRequest(server);
 

@@ -32,6 +32,7 @@ function Login() {
 
     useEffect(() => {
         if (state.isLoggedIn) {
+            router.back();
             router.push('/dashboard');
         }
     }, [state.isLoggedIn, router]);
@@ -52,7 +53,8 @@ function Login() {
                 localStorage.setItem('token', resData.token);
                 toast.success('Logged in successfully');
                 dispatch('LOGGED_IN', { token: resData.token });
-                router.push('/dashboard');
+                router.back();
+                // router.push('/dashboard');
             })
             .catch((err) => {
                 console.log(err);
