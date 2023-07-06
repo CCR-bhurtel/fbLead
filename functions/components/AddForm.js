@@ -189,7 +189,7 @@ function AddForm({ addLocalForm, handleClose }) {
                                 onClick={() => addNewField('basics')}
                                 src={Plus.src}
                                 alt=""
-                                className="cursor-pointer"
+                                className="cursor-pointer w-[2rem]"
                             />
                         </div>
 
@@ -252,7 +252,7 @@ function AddForm({ addLocalForm, handleClose }) {
                                     );
                                 }
                             })}
-                            <img onClick={() => addNewField('prFb')} src={Plus.src} alt="" className="cursor-pointer" />
+                            <img onClick={() => addNewField('prFb')} src={Plus.src} alt="" className="cursor-pointer w-[2rem]" />
                         </div>
                     </>
                 )}

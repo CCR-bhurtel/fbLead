@@ -1,11 +1,15 @@
 import { useContext, useEffect } from 'react';
 import AuthContextProvider from '../context/AuthContext';
 import '../styles/globals.css';
+import '../styles/App.scss';
 import setAuthToken from '../utils/setAuthToken';
 import axios from 'axios';
 import Head from 'next/head';
 import 'react-date-range/dist/styles.css'; // main style file
 import 'react-date-range/dist/theme/default.css'; // theme css file
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
 function MyApp({ Component, pageProps }) {
     useEffect(() => {

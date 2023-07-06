@@ -52,13 +52,15 @@ exports.getPieChartAndTableData = (records, interval) => {
     // Create a new object from the sorted array (optional)
     const sortedObj = Object.fromEntries(keyValueArray);
 
-    const result = { other: 0 };
+    const result = {};
 
     Object.entries(sortedObj).forEach((item, i) => {
         if (i < 7) {
             result[item[0]] = item[1].total;
         } else {
-            result.other += item[1].total;
+            if (item[1].total > 0) {
+                result.other += item[1].total;
+            }
         }
     });
 
@@ -76,6 +78,12 @@ exports.getPieChartAndTableData = (records, interval) => {
 exports.getGraphData = (records, interval) => {
     // data = {date: value}
     const dates = {};
+    let iterationDate = new Date(interval.startDate);
+    while (iterationDate <= new Date(interval.endDate)) {
+        dates[getFormattedDate(iterationDate)] = 0;
+        iterationDate.setDate(iterationDate.getDate() + 1);
+    }
+
     records.forEach((record) => {
         if (
             record.fields['Totale Soggiorno'] &&

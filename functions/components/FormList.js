@@ -13,7 +13,7 @@ function FormList({ forms, deleteForm }) {
                         <th className="headItem text-bold text-blue-500">Form Action</th>
                     </tr>
                 </thead>
-                <tbody className="">
+                <tbody className="overflow-scroll" >
                     {forms.map((form) => (
                         <FormItem key={form.formId} deleteFromLocal={deleteForm} form={form} />
                     ))}

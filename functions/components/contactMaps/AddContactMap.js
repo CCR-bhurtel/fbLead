@@ -75,7 +75,7 @@ function AddContact({ tableUpdateCount, selectedTable, handleChangeContactFieldM
     return (
         <div className="w-100 flex flex-col items-center justify-center mt-2">
             <Toaster />
-            <h1 className="font-semibold text-md text-center">Add or update contact</h1>
+            <h4 className="font-medium text-md text-center">Add or update contact</h4>
             {fields.map((field) => {
                 // if (obj.key === 'custom_field') return <></>;
 

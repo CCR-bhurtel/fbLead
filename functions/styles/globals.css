@@ -11,6 +11,7 @@ body {
     font-family: 'Poppins', sans-serif;
     color: dimgray;
     font-size: 1em;
+    overflow: scroll !important;
 }
 
 /* Media queries for smaller screens */
@@ -63,8 +64,6 @@ input[type='month'] {
     margin-top: -5px;
     color: #007bff;
 }
-
-
 
 .section {
     display: flex;

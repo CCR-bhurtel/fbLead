@@ -52,7 +52,7 @@ function FormItem({ form, deleteFromLocal }) {
                     </div>
                 </Popup>
             )}
-            <tr className="min-w-[100%]">
+            <tr className="min-w-[100%] mt-2">
                 <td className="text-center">{form.formId}</td>
                 <td className="text-center">{form.formName}</td>
                 <td className="text-center">active</td>
