@@ -1,23 +1,39 @@
 import React, { useEffect, useState } from 'react';
-// import EventListener from 'react-event-listener';
+// import EventListener from "react-event-listener";
 import DropdownGroup from './DropdownGroup';
-import { Calendar, Dollar, FiveStar, Location, SearchIcon, Stelle } from './Icon';
+import { Calendar, Dollar, FiveStar, Location, SearchIcon, Star, Stelle } from './Icon';
 
 import Calender from './calender/Calender';
 
-const Footer = () => {
+const Footer = ({ initialConfigData, config, setConfig }) => {
     const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
     const handleKeyboardEvent = (event) => {
-        setIsKeyboardOpen(event.detail?.isKeyboardOpen);
+        setIsKeyboardOpen(event.detail.isKeyboardOpen);
+    };
+
+    const [footerConfig, setFooterConfig] = useState(config);
+    const handleFooterConfig = (name, value) => {
+        console.log(name, value);
+        setFooterConfig({ ...footerConfig, [name]: value });
     };
 
     // calender
     const [isCalender, setIsCalender] = useState(false);
-    const [checkData, setCheckData] = useState({});
+    const [checkData, setCheckData] = useState({
+        start: footerConfig.checkInDate,
+        end: footerConfig.checkOutDate,
+    });
+
+    const handleSubmit = () => {
+        setConfig({
+            ...footerConfig,
+            checkInDate: checkData.start,
+            checkOutDate: checkData.end,
+        });
+    };
 
     const [isMobile, setIsMobile] = useState(false);
-
-    const checkHandler = (e) => {
+    const checkHandler = (e, source) => {
         e.target.blur();
         setIsCalender(true);
     };
@@ -34,21 +50,53 @@ const Footer = () => {
         month: 'long',
         day: 'numeric',
     };
+    const { comunes, stelles, distances, fascio } = initialConfigData;
+
     return (
         <footer style={{ position: isKeyboardOpen ? 'relative' : 'sticky' }}>
-            {/* <EventListener target="window" onResize={handleKeyboardEvent} onScreenResize={handleKeyboardEvent} /> */}
+            {/* <EventListener
+        target="window"
+        onResize={handleKeyboardEvent}
+        onScreenResize={handleKeyboardEvent}
+      /> */}
             <div className="container-fluid">
-                <div className="footer-wrapper footer-wrapper-old ">
-                    <DropdownGroup label="Comune" icon={<Location />} data={selectData} position="top" />
-                    <DropdownGroup label="Distanza dal mare" icon={<Stelle />} data={stelle} position="top" />
+                <div className="footer-wrapper d-none d-sm-flex">
                     <DropdownGroup
+                        handleChange={(value) => handleFooterConfig('comune', value)}
+                        value={footerConfig.comune}
+                        label="Comune"
+                        icon={<Location />}
+                        data={comunes}
+                        position="top"
+                    />
+                    <DropdownGroup
+                        handleChange={(value) => handleFooterConfig('distance', value)}
+                        label="Distanza dal mare"
+                        name="distance"
+                        icon={<Stelle />}
+                        value={footerConfig.distance}
+                        data={distances}
+                        position="top"
+                    />
+                    <DropdownGroup
+                        handleChange={(value) => handleFooterConfig('fascio', value)}
                         label="Fascia di Prezzo "
+                        name="fascio"
                         smText="(per persona)"
                         icon={<Dollar />}
+                        value={footerConfig.fascio}
                         data={fascio}
                         position="top"
                     />
-                    <DropdownGroup label="Stelle" icon={<FiveStar />} data={stelle} position="top" />
+                    <DropdownGroup
+                        handleChange={(value) => handleFooterConfig('stelle', value)}
+                        label="Stelle"
+                        name="stelle"
+                        icon={<FiveStar />}
+                        value={footerConfig.stelle}
+                        data={stelles}
+                        position="top"
+                    />
                     <div className="custom-dropdown">
                         <label htmlFor="checkin">Check In</label>
                         <input
@@ -78,17 +126,17 @@ const Footer = () => {
                         </span>
                     </div>
 
-                    <button type="submit" className="cmn-btn d-none d-sm-flex">
+                    <button onClick={handleSubmit} type="submit" className="cmn-btn d-none d-sm-flex">
                         <SearchIcon /> Find a Best Hotel
                     </button>
                 </div>
-                <div className="footer-wrapper footer-wrapper-new  custom-dropdown-wrp">
+                <div className="footer-wrapper d-sm-none custom-dropdown-wrp">
                     <div className="custom-dropdown">
                         <label htmlFor="checkin">Check In</label>
                         <input
                             type="text"
                             value={
-                                (checkData.start && new Date(checkData.end).toLocaleDateString('it-IT', options)) ||
+                                (checkData.start && new Date(checkData.start).toLocaleDateString('it-IT', options)) ||
                                 new Date().toLocaleDateString('it-IT', options)
                             }
                             onClick={(e) => checkHandler(e)}
@@ -114,93 +162,16 @@ const Footer = () => {
                 </div>
             </div>
 
-            {isCalender && <Calender handler={setIsCalender} setCheckData={setCheckData} />}
+            {isCalender && (
+                <Calender
+                    config={footerConfig}
+                    setConfig={setConfig}
+                    handler={setIsCalender}
+                    setCheckData={setCheckData}
+                />
+            )}
         </footer>
     );
 };
 
-const selectData = [
-    {
-        name: 'Tutta l’isola',
-    },
-    {
-        name: 'Tutta',
-    },
-    {
-        name: 'Tutta l’isola',
-    },
-    {
-        name: 'Tutta ',
-    },
-];
-const fascio = [
-    {
-        name: '100€ - 1000€',
-    },
-    {
-        name: '100€ - 1000€',
-    },
-    {
-        name: '100€ - 1000€',
-    },
-    {
-        name: '100€ - 1000€',
-    },
-];
-const stelle = [
-    {
-        name: '5 Stelle',
-    },
-    {
-        name: '15 Stelle',
-    },
-    {
-        name: '25 Stelle',
-    },
-    {
-        name: '35 Stelle ',
-    },
-];
-const distance = [
-    {
-        name: '1 km - 5 km',
-    },
-    {
-        name: '5 km - 10 km',
-    },
-    {
-        name: '1 km - 15 km',
-    },
-    {
-        name: '50km+ ',
-    },
-];
-const checkout = [
-    {
-        name: 'Sun 12/4',
-    },
-    {
-        name: 'Sun 12/4',
-    },
-    {
-        name: 'Sun 12/4',
-    },
-    {
-        name: 'Sun 12/4',
-    },
-];
-const checkin = [
-    {
-        name: 'Fri 12/2',
-    },
-    {
-        name: 'Fri 12/2',
-    },
-    {
-        name: 'Fri 12/2',
-    },
-    {
-        name: 'Fri 12/2',
-    },
-];
 export default Footer;

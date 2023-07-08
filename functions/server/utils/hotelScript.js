@@ -10,6 +10,7 @@ const {
     NINOX_DATABASE_ID,
     NINOX_BASE_API,
 } = require('../../config/keys');
+
 let baseNinoxTableURL = `${NINOX_BASE_API}/teams/${NINOX_TEAM_ID}/databases/${NINOX_DATABASE_ID}/tables`;
 
 class HotelScript {
@@ -57,7 +58,8 @@ class HotelScript {
     lineBreakFormatChange = (text) => {
         return text.replace('<br/>', '\n');
     };
-    createHotelOffertaRecords = (records) => {
+    createHotelOffertaRecords = (hotel) => {
+        const records = hotel.extractedDetailsFromXML.offerte.offerta;
         const dataToReturn = {
             lowestPrice: 0,
             offerteIds: [],
@@ -106,9 +108,11 @@ class HotelScript {
                             Pacchetto: this.lineBreakFormatChange(pacchetto[0]),
                             Omaggi: this.lineBreakFormatChange(omaggi[0]),
                             'Tag Offerta': this.lineBreakFormatChange(tagpremium[0]),
-                            'Tipo offerta': tipo_offerta[0],
+                            'Tipo offerta':
+                                tipo_offerta[0] === 'totale_offerta' ? 'Totale offerta' : 'Costo giornaliero',
                             'Attiva / Non attiva': true,
-                            // Priorità: 100,
+                            Priorità: hotel['Priorità'],
+                            Hotel: '',
                         },
                     };
                     const recordSavedResult = await axios.post(
@@ -125,25 +129,27 @@ class HotelScript {
                     );
                     dataToReturn.offerteIds.push(recordSavedResult.data.id);
 
-                    if (tipo_offerta === 'costo_giornaliero') {
-                        lowestPrices.push(prezzo_bb || prezzo_hb || prezzo_fb);
-                    } else if (tipo_offerta === 'totale_offerta') {
-                        let prezzoLow = prezzo_bb || prezzo_hb || prezzo_fb;
+                    const bb = parseInt(prezzo_bb[0]);
+                    const hb = parseInt(prezzo_hb[0]);
+                    const fb = parseInt(prezzo_fb[0]);
 
-                        lowestPrices.push(prezzoLow / min_notti);
+                    if (tipo_offerta[0] === 'costo_giornaliero') {
+                        lowestPrices.push(bb || hb || fb);
+                    } else if (tipo_offerta[0] === 'totale_offerta') {
+                        let prezzoLow = bb || hb || fb;
+
+                        lowestPrices.push((prezzoLow / min_notti).toFixed(2));
                     }
 
-                    if ((dataToReturn.offerteIds.length = records.length - errorCount)) {
+                    if (dataToReturn.offerteIds.length === records.length - errorCount) {
                         let min = 0;
+                        console.log(lowestPrices);
 
-                        lowestPrices.forEach((price, i) => {
-                            if (i === 0 || price < min) {
-                                min = price;
-                            }
-                        });
+                        lowestPrices.sort((a, b) => a - b);
+                        if (lowestPrices.length) min = lowestPrices[0];
 
                         dataToReturn.lowestPrice = min;
-
+                        console.log(dataToReturn);
                         resolve(dataToReturn);
                     }
                 } catch (err) {
@@ -156,15 +162,15 @@ class HotelScript {
 
     // delete offerta, create offerta and udate hotel with new offerta ids
     crudOperationsOnHotelWithOfferta = (hotels) => {
-        hotels.forEach(async (hotel) => {
+        hotels.slice(20,hotels.length).forEach(async (hotel) => {
             try {
-                await this.deleteHotelOffertaRecords(hotel.Offerte);
-                const dataReturnedAfterCreatingOfferta = await this.createHotelOffertaRecords(
-                    hotel.extractedDetailsFromXML.offerte.offerta
-                );
+                if (hotel.Offerte) await this.deleteHotelOffertaRecords(hotel.Offerte);
+
+                const dataReturnedAfterCreatingOfferta = await this.createHotelOffertaRecords(hotel);
+
                 await this.updateHotelRecordWithOfferteIds(
                     hotel.id,
-                    dataReturnedAfterCreatingOfferta.offertaIds,
+                    dataReturnedAfterCreatingOfferta.offerteIds,
                     dataReturnedAfterCreatingOfferta.lowestPrice
                 );
             } catch (err) {
@@ -175,14 +181,16 @@ class HotelScript {
 
     updateHotelRecordWithOfferteIds = async (hotelId, offertaIds, lowestPrice) => {
         await axios.post(
-            `${baseNinoxTableURL}/${NINOX_HOTEL_OFFERTE_TABLE_ID}/records`,
-            {
-                id: hotelId,
-                fields: {
-                    Offerte: offertaIds,
-                    'Prezzo Minore': lowestPrice,
+            `${baseNinoxTableURL}/${NINOX_HOTEL_TABLE_ID}/records`,
+            [
+                {
+                    id: hotelId,
+                    fields: {
+                        Offerte: offertaIds,
+                        'Prezzo Minore': lowestPrice,
+                    },
                 },
-            },
+            ],
             {
                 headers: {
                     Authorization: `Bearer ${NINOX_API_KEY}`,
@@ -199,9 +207,10 @@ class HotelScript {
             hotelsWithExtendedXMLData.forEach((hotel) => {
                 xml2js.parseString(hotel.xmlString, (err, result) => {
                     hotelWithXMLConvertedToJSON.push({ ...hotel, xmlString: '', extractedDetailsFromXML: result });
-                    // this.crudOperationsOnHotelWithOfferta(hotelWithXMLConvertedToJSON);
                 });
             });
+
+            this.crudOperationsOnHotelWithOfferta(hotelWithXMLConvertedToJSON);
 
             // console.log(hotelWithXMLConvertedToJSON[0]);
             fs.writeFile('xmlData.json', JSON.stringify(hotelWithXMLConvertedToJSON), () => {});
@@ -211,3 +220,27 @@ class HotelScript {
 
 const hotelScript = new HotelScript();
 hotelScript.runScript();
+
+// hotels.forEach(async (hotel) => {
+//     axios
+//         .post(
+//             `${baseNinoxTableURL}/${NINOX_HOTEL_TABLE_ID}/records`,
+
+//             {
+//                 fields: hotel,
+//             },
+
+//             {
+//                 headers: {
+//                     Authorization: `Bearer ${NINOX_API_KEY}`,
+//                     'Content-Type': 'application/json',
+//                 },
+//             }
+//         )
+//         .then((res) => {
+//             console.log(res.data);
+//         })
+//         .catch((err) => {
+//             console.log(err);
+//         });
+// });

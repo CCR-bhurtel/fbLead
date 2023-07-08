@@ -1,10 +1,26 @@
 import React, { useState } from 'react';
 import { AngleDown } from './Icon';
 
-const DropdownGroup = ({ data, icon, position, label, iconRight, smText, labelSmHide }) => {
-    const [index, setIndex] = useState(0);
+const DropdownGroup = ({
+    data,
+    icon,
+    position,
+    label,
+    iconRight,
+    smText,
+    labelSmHide,
+    handleChange,
+    name,
+
+    value,
+}) => {
+    const indexI = data.findIndex(function (obj) {
+        return obj.name === value.name;
+    });
+    const [index, setIndex] = useState(indexI);
     const [open, setOpen] = useState(false);
     const activeIndex = data[index];
+
     return (
         <>
             <div className="__dropdown-item">
@@ -28,12 +44,17 @@ const DropdownGroup = ({ data, icon, position, label, iconRight, smText, labelSm
                         )}
                         {iconRight && icon && icon}
                     </button>
-                    <ul className={`__dropdown-menu ${open ? 'active' : ''} ${position ? `position-${position}` : ''}`}>
+                    <ul
+                        className={`__dropdown-menu ${open ? 'active' : ''} ${position ? `position-${position}` : ''}`}
+                        style={{ padding: 0 }}
+                    >
                         {data?.map(({ img, name, value }, i) => (
                             <li
                                 key={i}
                                 onClick={() => {
                                     setIndex(i);
+                                    handleChange(data[i]);
+
                                     setOpen(false);
                                 }}
                                 className={index === i ? 'active' : ''}

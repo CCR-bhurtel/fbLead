@@ -10,12 +10,16 @@ import 'react-date-range/dist/theme/default.css'; // theme css file
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-
+import 'bootstrap/dist/css/bootstrap.min.css';
+// import 'bootstrap';
 function MyApp({ Component, pageProps }) {
     useEffect(() => {
         const token = localStorage.getItem('token');
         setAuthToken(token);
         console.log(axios.defaults.headers.common['x-auth-token']);
+    }, []);
+    useEffect(() => {
+        require('bootstrap/dist/js/bootstrap.bundle.min.js');
     }, []);
     return (
         <AuthContextProvider>

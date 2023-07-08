@@ -3,7 +3,7 @@ const AppError = require('../../utils/AppError');
 const catchAsync = require('../../utils/catchAsync');
 
 exports.get_templateMaps = catchAsync(async (req, res) => {
-    const { limit = 20, page = 0 } = req.query;
+    const { limit = 100, page = 0 } = req.query;
     const templateMaps = await NinoxMap.find()
         .skip(limit * page)
         .limit(limit);

@@ -7,15 +7,49 @@ import { Dollar, FiveStar, Location, Stelle } from './Icon';
 import icon_1 from '../assets/img/icon-1.png';
 import icon_2 from '../assets/img/icon-2.png';
 
-const Banner = () => {
+const Banner = ({ initialConfigData, config, handleConfigChange }) => {
+    const { comunes, stelles, distances, fascio } = initialConfigData;
     return (
         <section className="banner-section">
-            <div className="container z-[1]">
+            <div className="container">
                 <div className="banner-wrapper">
-                    <DropdownGroup label="Comune" icon={<Location />} data={selectData} />
-                    <DropdownGroup label="Fascia di Prezzo " smText="(per persona)" icon={<Dollar />} data={fascio} />
-                    <DropdownGroup label="Stelle" icon={<FiveStar />} data={stelle} />
-                    <DropdownGroup label="Distanza dal mare" icon={<Stelle />} data={distance} />
+                    <DropdownGroup
+                        handleChange={(value) => {
+                            handleConfigChange('comune', value);
+                        }}
+                        value={config.comune}
+                        label="Comune"
+                        icon={<Location />}
+                        data={comunes}
+                    />
+                    <DropdownGroup
+                        handleChange={(value) => {
+                            handleConfigChange('fascio', value);
+                        }}
+                        value={config.fascio}
+                        label="Fascia di Prezzo "
+                        smText="(per persona)"
+                        icon={<Dollar />}
+                        data={fascio}
+                    />
+                    <DropdownGroup
+                        handleChange={(value) => {
+                            handleConfigChange('stelle', value);
+                        }}
+                        value={config.stelle}
+                        label="Stelle"
+                        icon={<FiveStar />}
+                        data={stelles}
+                    />
+                    <DropdownGroup
+                        handleChange={(value) => {
+                            handleConfigChange('distance', value);
+                        }}
+                        value={config.distance}
+                        label="Distanza dal mare"
+                        icon={<Stelle />}
+                        data={distances}
+                    />
                 </div>
                 <img src={icon_1.src} alt="" className="icon-1" />
                 <img src={icon_2.src} alt="" className="icon-2" />
@@ -36,61 +70,5 @@ const Banner = () => {
         </section>
     );
 };
-const selectData = [
-    {
-        name: 'Tutta l’isola',
-    },
-    {
-        name: 'Tutta',
-    },
-    {
-        name: 'Tutta l’isola',
-    },
-    {
-        name: 'Tutta ',
-    },
-];
-const fascio = [
-    {
-        name: '100€ - 1000€',
-    },
-    {
-        name: '100€ - 1000€',
-    },
-    {
-        name: '100€ - 1000€',
-    },
-    {
-        name: '100€ - 1000€',
-    },
-];
-const stelle = [
-    {
-        name: '5 Stelle',
-    },
-    {
-        name: '15 Stelle',
-    },
-    {
-        name: '25 Stelle',
-    },
-    {
-        name: '35 Stelle ',
-    },
-];
-const distance = [
-    {
-        name: '1 km - 5 km',
-    },
-    {
-        name: '5 km - 10 km',
-    },
-    {
-        name: '1 km - 15 km',
-    },
-    {
-        name: '50km+ ',
-    },
-];
 
 export default Banner;
