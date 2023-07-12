@@ -19,6 +19,8 @@ const formatDate = (dateString) => {
 };
 
 exports.initialData = catchAsync(async (req, res, next) => {
+    console.log(`${baseNinoxTableURL}/${NINOX_HOTEL_TABLE_ID}/records`);
+
     const comunes = [];
     const uniqueCommunes = [];
     const uniqueStelles = [];
@@ -180,9 +182,17 @@ exports.getHotelData = catchAsync(async (req, res, next) => {
         const checkInDateFromQuery = new Date(checkInDate);
         const checkOutDateFromQuery = new Date(checkOutDate);
 
-        if (checkInDateFromRecord <= checkInDateFromQuery && checkOutDateFromRecord >= checkOutDateFromQuery) {
+        const condition1 =
+            checkInDateFromRecord <= checkInDateFromQuery && checkOutDateFromRecord >= checkOutDateFromQuery;
+        const condition2 =
+            checkInDateFromRecord >= checkInDateFromQuery && checkInDateFromRecord <= checkOutDateFromQuery;
+        const condition3 =
+            checkOutDateFromRecord <= checkOutDateFromQuery && checkOutDateFromRecord >= checkInDateFromQuery;
+
+        if (condition1 || condition2 || condition3) {
             linkedHotels.push(record.fields.Hotel);
         }
+
         if (i === offerteRecords.length - 1) {
             linkedHotels.forEach((hotel) => {
                 if (!filteredUniqueHotels.includes(hotel)) {
@@ -229,9 +239,13 @@ exports.getHotelData = catchAsync(async (req, res, next) => {
         return distanceA - distanceB;
     });
 
+    if (!sortedHotelsOnDistanzaMare.length) return res.status(200).json({ hotels: [] });
+
     let hotelWithLowestDistanzaMare = { ...sortedHotelsOnDistanzaMare[0], ticker: 'Più vicino al mare' };
 
     const sortedHotelsOnPriorita = sortRecordsOnPriorita(sortedHotelsOnDistanzaMare.slice(1));
+
+    if (!sortedHotelsOnPriorita.length) return res.status(200).json({ hotels: [hotelWithLowestDistanzaMare] });
 
     let hotelWithLowestPriorita = { ...sortedHotelsOnPriorita[0], ticker: 'Più Venduto' };
 
@@ -244,15 +258,15 @@ exports.getHotelData = catchAsync(async (req, res, next) => {
         return prezzoA - prezzoB;
     });
 
+    if (!sortedHotelsOnPrezzo.length)
+        return res.status(200).json({ hotels: [hotelWithLowestDistanzaMare, hotelWithLowestPriorita] });
     let hotelWithLowestPrezzo = { ...sortedHotelsOnPrezzo[0], ticker: 'Prezzo più basso' };
 
     let remainingRecords = sortRecordsOnPriorita(sortedHotelsOnPrezzo.slice(1));
 
-    return res
-        .status(200)
-        .json({
-            hotels: [hotelWithLowestDistanzaMare, hotelWithLowestPriorita, hotelWithLowestPrezzo, ...remainingRecords],
-        });
+    return res.status(200).json({
+        hotels: [hotelWithLowestDistanzaMare, hotelWithLowestPriorita, hotelWithLowestPrezzo, ...remainingRecords],
+    });
     //  filter hotels with given other filters
 
     // send hotel

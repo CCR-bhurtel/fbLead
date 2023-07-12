@@ -9,7 +9,7 @@ import { FaqsItems } from './FaqsItems';
 import { AngleDown, AngleUp, Bus, Car, CheckIcon, NextIcon, PrevIcon, Ship, Train } from './Icon';
 import ViewInquiryForm from './ViewInquiryForm';
 import SelectDropDown from './SelectDropDown';
-const OfferPriceSlider = ({ offers, serial, setOfferButtonIn, offerButtonIn }) => {
+const OfferPriceSlider = ({ offers, serial, setOfferButtonIn, offerButtonIn, hotel, checkInDate, checkOutDate }) => {
     const [index, setIndex] = useState(0);
     const [innerCollapse, setInnerCollapse] = useState(false);
 
@@ -194,7 +194,13 @@ const OfferPriceSlider = ({ offers, serial, setOfferButtonIn, offerButtonIn }) =
             </div>
             <div className="inquiry-form pt-32 collapse" id={`package-inner-${serial}`}>
                 <div className="scroll-pos" ref={scrollRef}></div>
-                <ViewInquiryForm />
+                <ViewInquiryForm
+                    checkInDate={checkInDate}
+                    checkOutDate={checkOutDate}
+                    Hotel={hotel['Nome Hotel']}
+                    NomeModulo={hotel['NomeModulo']}
+                    totalPriceForUser={activeData.totalPriceForUser.toFixed(2)}
+                />
             </div>
         </>
     );

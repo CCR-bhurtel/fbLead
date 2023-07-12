@@ -14,6 +14,7 @@ const ninoxRouter = require('./Routes/ninox');
 const respondRouter = require('./Routes/respond');
 const webhookController = require('./controllers/respondIo/webhookController');
 const priceMediumRouter = require('./Routes/pricemedium');
+const postEnquiry = require('./controllers/data/postEnquiry');
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use(express.json());
 app.use('/api/user', userRouter);
 app.use('/api/form', authProtect, formRouter);
 app.use('/api/data', ninoxRouter);
+app.post('/api/enquiry', postEnquiry);
 
 app.use('/api/respond', authProtect, respondRouter);
 app.post('/api/respondwebhook', webhookController);

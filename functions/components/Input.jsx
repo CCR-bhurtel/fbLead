@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 
-const Input = ({ label, select, options, optional, ...rest }) => {
-    const [value, setValue] = useState('');
+const Input = ({ required, type, value, handleChange, label, select, options, name, optional, ...rest }) => {
     return (
         <div className="position-relative">
             <label className="__form-label">
@@ -14,15 +13,21 @@ const Input = ({ label, select, options, optional, ...rest }) => {
             </label>
             {!select ? (
                 <input
-                    type="text"
+                    type={type}
                     className="form-control __form-control"
                     value={value}
-                    onChange={(e) => setValue(e.target.value)}
+                    name={name}
+                    onChange={handleChange}
                     {...rest}
                 />
             ) : options ? (
                 options.length ? (
-                    <select className="form-control __form-control form-select">
+                    <select
+                        value={value}
+                        name={name}
+                        onChange={handleChange}
+                        className="form-control __form-control form-select"
+                    >
                         {...options.map((item, i) => (
                             <option key={i} value={item.options}>
                                 {item.text}

@@ -15,6 +15,7 @@ const isEmail = (phone) => {
 };
 
 const getAllData = async () => {
+
     let page = 0;
     let records = [];
     while (true) {
@@ -69,8 +70,6 @@ const getDuplicatesClusterWithPhone = async (records) => {
     });
 
     // console.log(duplicateListCluster);
-
-
 
     return duplicateListCluster;
 };

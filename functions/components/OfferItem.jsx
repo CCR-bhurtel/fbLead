@@ -173,16 +173,18 @@ const OfferItem = (props) => {
                                     <img src={plus.src} alt="" />
                                 </button>
                                 <div>
-                                    <div>{hotel['Stelle struttura'][0]}/5</div>
+                                    {hotel['Stelle struttura'] ? <div>{hotel['Stelle struttura'][0]}/5</div> : <></>}
                                     <div className="subtxt">(125K Review)</div>
                                 </div>
                             </div>
                             <h6 className="subtitle">
-                                {hotel['Hotel'].length > 80 ? hotel['Hotel'].substring(0, 80) + '...' : hotel['Hotel']}
+                                {hotel['Hotel']?.length > 80
+                                    ? hotel['Hotel']?.substring(0, 80) + '...'
+                                    : hotel['Hotel']}
                             </h6>
                             <div className="lorem">
-                                {hotel['Descrizione Generica'].length > 100
-                                    ? hotel['Descrizione Generica'].substring(0, 120) + '...'
+                                {hotel['Descrizione Generica']?.length > 100
+                                    ? hotel['Descrizione Generica']?.substring(0, 120) + '...'
                                     : hotel['Descrizione Generica']}
                             </div>
                         </div>
@@ -248,6 +250,9 @@ const OfferItem = (props) => {
                 ) : offers && offers.length ? (
                     <OfferPriceSlider
                         offers={offers}
+                        hotel={hotel}
+                        checkInDate={checkInDate}
+                        checkOutDate={checkOutDate}
                         setOfferButtonIn={setOfferButtonIn}
                         offerButtonIn={offerButtonIn}
                         serial={index}
