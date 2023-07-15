@@ -19,7 +19,7 @@ export default function Calender({ handler, setCheckData, setConfig, config }) {
         month: firstMon.month + 1,
     });
 
-    const [selectDate, setSelectDate] = useState([]);
+    const [selectDate, setSelectDate] = useState([config.checkInDate, config.checkOutDate]);
 
     const selectHandler = (e) => {
         setSelectDate((prev) => {

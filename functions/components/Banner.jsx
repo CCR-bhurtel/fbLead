@@ -28,7 +28,7 @@ const Banner = ({ initialConfigData, config, handleConfigChange }) => {
                         }}
                         value={config.fascio}
                         label="Fascia di Prezzo "
-                        smText="(per persona)"
+                        smText="(giorno)"
                         icon={<Dollar />}
                         data={fascio}
                     />

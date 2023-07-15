@@ -39,7 +39,6 @@ const postAnagrafiche = async (data) => {
         }
     );
 
-
     return response.data.id;
 };
 const postDataPersonalizatti = async (data) => {
@@ -81,6 +80,8 @@ function calculateNights(startDate, endDate) {
 
     return { nights: numberOfNights };
 }
+
+// 2023-07-17 2023-07-14
 module.exports = catchAsync(async (req, res, next) => {
     const {
         Nome,
@@ -98,6 +99,7 @@ module.exports = catchAsync(async (req, res, next) => {
         Hotel,
         pricePerPerson,
     } = req.body;
+
     if (!Nome || !Cognome || !Email || !Phone) return next(new AppError('Please provide required data', 400));
     if (!rooms.length) {
         return next(new AppError('Please select a room', 400));
@@ -119,9 +121,16 @@ module.exports = catchAsync(async (req, res, next) => {
     const arrivalDate = arrival ? formatDate(arrival) : '';
     const departureDate = departure ? formatDate(departure) : '';
 
-    const { nights } = calculateNights(arrivalDate, departureDate);
+    const { nights } = calculateNights(arrival, departure);
 
-    let tipi = 'stanza 1 | ';
+    let tipi = '';
+
+    rooms.forEach((room, i) => {
+        let tipiForRoom = `stanza ${i + 1} | ${room.noofAdults} adulti ${
+            room.noofChildren ? `-${room.noofChildren} (${room.ages.join('-')})` : ''
+        }}, `;
+        tipi += tipiForRoom;
+    });
     let agesOfBambani = rooms[0].ages ? rooms[0].ages.sort((a, b) => a - b) : [];
     let minAgeOfBambini = agesOfBambani[0];
     let maxAgeOfBambini = agesOfBambani[agesOfBambani.length - 1];
@@ -130,16 +139,16 @@ module.exports = catchAsync(async (req, res, next) => {
     tipi += rooms[0].noofChildren ? `- ${rooms[0].noofChildren} bambini` : '';
 
     if (agesOfBambani.length === 1) {
-        tipi += `(${maxAgeOfBambini})`;
+        tipi += ` (${maxAgeOfBambini})`;
     } else if (agesOfBambani.length > 1) {
-        tipi += ` (${minAgeOfBambini} - ${maxAgeOfBambini})`;
+        tipi += ` (${minAgeOfBambini}-${maxAgeOfBambini})`;
     }
     const data = {
         Modulo: NomeModulo,
         'Data e Ora': new Date(postedDate),
-        'Città di Partenza': Citta,
+        'Città di Partenza': Citta && Citta.length ? Citta : 'Nessun Viaggio Incluso',
         'Tipi di Camera': tipi,
-        'Periodo Soggiorno': `${arrivalDate} - ${departureDate} - ${nights} notti - € ${pricePerPerson} -${packageBoard}`,
+        'Periodo Soggiorno': `${departureDate} - ${arrivalDate} - ${nights} notti - € ${pricePerPerson} -${packageBoard}`,
         Hotel,
         'Note Richieste': note,
 

@@ -38,6 +38,7 @@ const OfferItem = (props) => {
     const [offerButtonIn, setOfferButtonIn] = useState(true);
 
     const sliderRef = useRef(null);
+    const images = hotel.immaginiUrl ? hotel.immaginiUrl.split('\\\\n') : hotel.img;
 
     const loadOffers = () => {
         setLoadingOffers(true);
@@ -104,15 +105,16 @@ const OfferItem = (props) => {
                             </>
                         )}
                     </div>
-                    <div className="price-area">
-                        <div>A PARTIRE DA</div>
-                        <h4 className="font-bold " style={{ color: 'var(--title)' }}>
+
+                    <div className="price-area d-flex flex-col">
+                        <div>A PARTIRE DA (giorno)</div>
+                        <h4 className="font-bold align-self-end" style={{ color: 'var(--title)' }}>
                             {hotel['Prezzo Minore']}€
                         </h4>
                     </div>
 
                     {hotel.ticker ? (
-                        <span className="ticker d-none d-md-flex">
+                        <span className="ticker d-none d-md-flex ">
                             <span>{hotel.ticker}</span>
                         </span>
                     ) : (
@@ -136,10 +138,10 @@ const OfferItem = (props) => {
                             <Swiper
                                 spaceBetween={20}
                                 modules={[Pagination, Navigation]}
-                                pagination={{ clickable: true }}
+                                // pagination={{ clickable: true }}
                                 ref={sliderRef}
                             >
-                                {hotel.img?.map((item, i) => (
+                                {images.slice(0, images.length - 1).map((item, i) => (
                                     <SwiperSlide key={i}>
                                         <div className="img-item">
                                             <img src={item} alt="" />
@@ -174,7 +176,7 @@ const OfferItem = (props) => {
                                 </button>
                                 <div>
                                     {hotel['Stelle struttura'] ? <div>{hotel['Stelle struttura'][0]}/5</div> : <></>}
-                                    <div className="subtxt">(125K Review)</div>
+                                    <div className="subtxt">({hotel.reviews} Reviews)</div>
                                 </div>
                             </div>
                             <h6 className="subtitle">

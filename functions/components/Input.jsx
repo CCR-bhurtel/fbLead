@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { createRef, useRef, useState } from 'react';
 
-const Input = ({ required, type, value, handleChange, label, select, options, name, optional, ...rest }) => {
+const Input = React.forwardRef((props, ref) => {
+    const { required, type, value, handleChange, label, select, options, name, optional, ...rest } = props;
+    const inputRef = createRef(ref);
     return (
         <div className="position-relative">
             <label className="__form-label">
@@ -18,6 +20,7 @@ const Input = ({ required, type, value, handleChange, label, select, options, na
                     value={value}
                     name={name}
                     onChange={handleChange}
+                    ref={ref}
                     {...rest}
                 />
             ) : options ? (
@@ -42,6 +45,6 @@ const Input = ({ required, type, value, handleChange, label, select, options, na
             )}
         </div>
     );
-};
+});
 
 export default Input;

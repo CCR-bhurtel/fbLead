@@ -1,14 +1,6 @@
 {
-  "/_error": "pages/_error.js",
   "/_app": "pages/_app.js",
-  "/api/hello": "pages/api/hello.js",
+  "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/hotels": "pages/hotels.html",
-  "/dashboard": "pages/dashboard.html",
-  "/databoard": "pages/databoard.html",
-  "/privacypolicy": "pages/privacypolicy.html",
-  "/tos": "pages/tos.html",
-  "/login": "pages/login.html",
-  "/templates": "pages/templates.html",
-  "/404": "pages/404.html"
+  "/hotels": "pages/hotels.js"
 }

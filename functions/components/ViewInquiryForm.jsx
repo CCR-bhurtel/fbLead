@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { createRef, useEffect, useState } from 'react';
 import { Plus2, Send } from './Icon';
 import Input from './Input';
 import Room from './Room';
@@ -7,36 +7,177 @@ import axios from 'axios';
 
 import loading from '../public/dualLoading.gif';
 
-const ViewInquiryForm = ({ Hotel, NomeModulo, totalPriceForUser, checkInDate, checkOutDate }) => {
+const formatDate = (ogDate) => {
+    let date = new Date(ogDate);
+
+    // Get the individual components of the date
+    let year = date.getFullYear();
+    let month = String(date.getMonth() + 1).padStart(2, '0'); // Month is zero-based
+    let day = String(date.getDate()).padStart(2, '0');
+
+    // Format the date as YYYY-MM-DD
+    let formattedDate = `${year}-${month}-${day}`;
+
+    // Set the value of the HTML input element
+    return formattedDate;
+};
+
+function calculateDaysAndNights(startDate, endDate) {
+    // Convert the dates to milliseconds
+    const startMillis = new Date(startDate).getTime();
+    const endMillis = new Date(endDate).getTime();
+
+    // Calculate the time difference in milliseconds
+    const timeDiffMillis = endMillis - startMillis;
+
+    var numberOfNights = Math.ceil(timeDiffMillis / (1000 * 3600 * 24));
+
+    // Calculate the number of days
+    const days = Math.floor(timeDiffMillis / (1000 * 60 * 60 * 24));
+
+    return { days, nights: numberOfNights };
+}
+
+const checkDateValidity = (offer, checkInDate, checkOutDate) => {
+    const minNights = parseInt(offer['minimo notti']);
+    const maxNights = parseInt(offer['massimo notti']);
+
+    const checkInDateFromRecord = new Date(offer['Valida dal']);
+    const checkOutDateFromRecord = new Date(offer['Valida al']);
+
+    const checkInDateFromQuery = new Date(checkInDate);
+    const checkOutDateFromQuery = new Date(checkOutDate);
+
+    const { nights } = calculateDaysAndNights(checkInDateFromQuery, checkOutDateFromQuery);
+
+    if (checkInDateFromQuery >= checkInDateFromRecord && checkOutDateFromQuery <= checkOutDateFromRecord - minNights) {
+        if (nights === minNights || (nights >= minNights && nights <= maxNights)) {
+            return true;
+        }
+    }
+
+    return false;
+};
+
+const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInDate, checkOutDate }) => {
     const [value, setvalue] = useState('');
+
+    const [dateValid, setDateValid] = useState(checkDateValidity(offer, checkInDate, checkOutDate));
+
     const [userData, setUserData] = useState({
         Nome: '',
         Cognome: '',
         Email: '',
         Phone: '',
         postedDate: new Date().toDateString(),
-        arrival: new Date(checkInDate).toISOString().substr(0, 10),
-        departure: new Date(checkOutDate).toISOString().substr(0, 10),
+        departure: '',
+
+        arrival: '',
         packageBoard: 'Half Board',
-        rooms: [{ noofAdults: 2, noofChildren: 2, ages: [10, 12] }],
+        rooms: [{ noofAdults: 2, noofChildren: 0, ages: [] }],
         Citta: '',
         note: '',
         NomeModulo,
         Hotel,
-        numeroBagagliAlis: '1 bagaglio',
-        ferry: 'Minore di 4 metri',
-        trasporto: 'Bus da 85 € A/R compreso trasferimenti e passaggi marittimi',
+
+        numeroBagagliAlis: '1',
+        ferry: 'traghetto con auto fino 4 mt. da Pozzuoli A/R € 75 - passeggeri € 22',
+        trasporto: 'Bus',
         numeroBagagliViaggio: '',
 
-        pricePerPerson: totalPriceForUser,
+        pricePerPerson: '',
         selectedCitta: '',
     });
+
+    const [maxDepartureDate, setMaxDepatureDate] = useState('');
+    const [minDepartureDate, setMinDepartureDate] = useState('');
+    const [minArrivalDate, setMinArrivalDate] = useState('');
+    const [maxArrivalDate, setMaxArrivalDate] = useState('');
+
+    function calculateInitialMinAndMaxDates(offer) {
+        const minNights = parseInt(offer['minimo notti']);
+        // const maxNights = parseInt(offer['massimo notti']);
+
+        const checkInDateFromRecord = new Date(offer['Valida dal']);
+        const checkOutDateFromRecord = new Date(offer['Valida al']);
+
+        // for departure
+        const minimumDeparture = checkInDateFromRecord;
+
+        const maximumDeparture = checkOutDateFromRecord;
+        maximumDeparture.setDate(maximumDeparture.getDate() - minNights);
+
+        setMaxDepatureDate(formatDate(maximumDeparture));
+        setMinDepartureDate(formatDate(minimumDeparture));
+
+        // for arrival
+
+        const minimumArrival = checkInDateFromRecord;
+        minimumArrival.setDate(minimumArrival.getDate() + minNights);
+
+        const maximumArrival = new Date(offer['Valida al']);
+
+        setMaxArrivalDate(formatDate(maximumArrival));
+
+        setMinArrivalDate(formatDate(minimumArrival));
+    }
+
+    useEffect(() => {
+        setDateValid(checkDateValidity(offer, checkInDate, checkOutDate));
+    }, [offer, checkInDate, checkOutDate]);
+
+    const [readOnly, setReadOnly] = useState(false);
+
+    useEffect(() => {
+        calculateInitialMinAndMaxDates(offer, checkInDate, checkOutDate);
+
+        let { nights } = calculateDaysAndNights(offer['Valida dal'], offer['Valida al']);
+        const minNights = parseInt(offer['minimo notti']);
+
+        const equal = nights === minNights;
+
+        setReadOnly(equal);
+        // const maxNights = parseInt(offer['massimo notti']);
+
+        setUserData({
+            ...userData,
+            departure: equal ? formatDate(new Date(offer['Valida dal'])) : dateValid ? formatDate(checkInDate) : '',
+
+            arrival: equal ? formatDate(new Date(offer['Valida al'])) : dateValid ? formatDate(checkOutDate) : '',
+            NomeModulo,
+            Hotel,
+            pricePerPerson: totalPriceForUser,
+        });
+    }, [offer, checkInDate, checkOutDate, Hotel, NomeModulo, totalPriceForUser, dateValid]);
+
+    const handleDepartureChange = (e) => {
+        const departureDateFromForm = new Date(e.target.value);
+        const minNights = parseInt(offer['minimo notti']);
+
+        const minArrivalDateCalc = formatDate(
+            departureDateFromForm.setDate(departureDateFromForm.getDate() + minNights)
+        );
+        setMinArrivalDate(minArrivalDateCalc);
+    };
+
+    const handleArrivalChange = (e) => {
+        const arrivalDateFromForm = new Date(e.target.value);
+        const minNights = parseInt(offer['minimo notti']);
+
+        const maxDepartureDateCalc = formatDate(arrivalDateFromForm.setDate(arrivalDateFromForm.getDate() - minNights));
+
+        setMaxDepatureDate(maxDepartureDateCalc);
+    };
 
     const handleChange = (e) => {
         setUserData({ ...userData, [e.target.name]: e.target.value });
     };
 
     const [sending, setSending] = useState(false);
+
+    const departureRef = createRef(null);
+
+    const arrivalRef = createRef(null);
 
     const handeSubmit = (e) => {
         e.preventDefault();
@@ -55,6 +196,14 @@ const ViewInquiryForm = ({ Hotel, NomeModulo, totalPriceForUser, checkInDate, ch
         }
         if (!userData.Phone) {
             toast.error('please enter phone');
+            return;
+        }
+        if (!userData.arrival) {
+            toast.error('please select arrival date');
+            return;
+        }
+        if (!userData.departure) {
+            toast.error('please select departure date');
             return;
         }
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -93,7 +242,7 @@ const ViewInquiryForm = ({ Hotel, NomeModulo, totalPriceForUser, checkInDate, ch
                     return;
                 }
 
-                dataToBePosted.Citta = `${userData.trasporto} da ${userData.numeroBagagliViaggio}`;
+                dataToBePosted.Citta = `${userData.trasporto} con ${userData.numeroBagagliViaggio}`;
 
                 break;
 
@@ -107,28 +256,28 @@ const ViewInquiryForm = ({ Hotel, NomeModulo, totalPriceForUser, checkInDate, ch
             .then((res) => {
                 toast.success('Success');
                 setSending(false);
-                setUserData({
-                    Nome: '',
-                    Cognome: '',
-                    Email: '',
-                    Phone: '',
-                    postedDate: new Date().toDateString(),
-                    arrival: new Date(checkInDate).toISOString().substr(0, 10),
-                    departure: new Date(checkOutDate).toISOString().substr(0, 10),
-                    packageBoard: 'Half Board',
-                    rooms: [{ noofAdults: 2, noofChildren: 2, ages: [10, 12] }],
-                    Citta: '',
-                    note: '',
-                    NomeModulo,
-                    Hotel,
-                    numeroBagagliAlis: '1 bagaglio',
-                    ferry: '',
-                    trasporto: 'Bus da 85€',
-                    numeroBagagliViaggio: 'Milano',
+                // setUserData({
+                //     Nome: '',
+                //     Cognome: '',
+                //     Email: '',
+                //     Phone: '',
+                //     postedDate: new Date().toDateString(),
+                //     arrival: formatDate(checkOutDate),
+                //     departure: formatDate(checkInDate),
+                //     packageBoard: 'Half Board',
+                //     rooms: [{ noofAdults: 2, noofChildren: 0, ages: [] }],
+                //     Citta: '',
+                //     note: '',
+                //     NomeModulo,
+                //     Hotel,
+                //     numeroBagagliAlis: '1 bagaglio',
+                //     ferry: '',
+                //     trasporto: 'Bus da 85€',
+                //     numeroBagagliViaggio: 'Milano',
 
-                    pricePerPerson: totalPriceForUser,
-                    selectedCitta: '',
-                });
+                //     pricePerPerson: totalPriceForUser,
+                //     selectedCitta: '',
+                // });
             })
             .catch((err) => {
                 setSending(false);
@@ -138,7 +287,7 @@ const ViewInquiryForm = ({ Hotel, NomeModulo, totalPriceForUser, checkInDate, ch
     };
 
     const handleAddRoom = () => {
-        setUserData({ ...userData, rooms: [...userData.rooms, { noofAdults: 2, noofChildren: 2, ages: [10, 12] }] });
+        setUserData({ ...userData, rooms: [...userData.rooms, { noofAdults: 2, noofChildren: 0, ages: [] }] });
     };
 
     const removeRoom = (index) => {
@@ -157,175 +306,251 @@ const ViewInquiryForm = ({ Hotel, NomeModulo, totalPriceForUser, checkInDate, ch
 
     return (
         <>
-            <div className="inquiry--form">
-                <div className="row g-3">
-                    <div className="col-sm-6 col-md-3">
-                        <Input
-                            required
-                            type="text"
-                            value={userData.Nome}
-                            name="Nome"
-                            handleChange={handleChange}
-                            label="First Name"
-                            placeholder="Your Name"
-                        />
-                    </div>
-                    <div className="col-sm-6 col-md-3">
-                        <Input
-                            required
-                            type="text"
-                            name="Cognome"
-                            value={userData.Cognome}
-                            handleChange={handleChange}
-                            label="Last Name"
-                            placeholder="User Name"
-                        />
-                    </div>
-                    <div className="col-sm-6 col-md-3">
-                        <Input
-                            required
-                            type="email"
-                            label="E-mail "
-                            value={userData.Email}
-                            handleChange={handleChange}
-                            name="Email"
-                            placeholder="Your Email"
-                        />
-                    </div>
-                    <div className="col-sm-6 col-md-3">
-                        <Input
-                            required
-                            label="Phone "
-                            type="text"
-                            value={userData.Phone}
-                            handleChange={handleChange}
-                            name="Phone"
-                            placeholder="1234567890"
-                        />
-                    </div>
-                    <div className="col-sm-6 col-md-3 col-lg-2">
-                        <Input
-                            handleChange={handleChange}
-                            value={userData.arrival}
-                            name="arrival"
-                            required
-                            label="Arrival Date "
-                            type="date"
-                        />
-                    </div>
-                    <div className="col-sm-6 col-md-3 col-lg-2">
-                        <Input
-                            handleChange={handleChange}
-                            value={userData.departure}
-                            name="departure"
-                            label="Departure Date"
-                            type="date"
-                        />
-                    </div>
-                    <div className="col-sm-6 col-md-3 col-lg-2">
-                        <Input
-                            value={userData.packageBoard}
-                            handleChange={handleChange}
-                            name="packageBoard"
-                            label="Package"
-                            placeholder="Half board"
-                            select
-                            options={packaged}
-                        />
-                    </div>
-                </div>
-
-                <Room id={0} handleUpdateRoom={handleUpdateRooms} />
-
-                {userData.rooms.slice(1)?.map((item, i) => (
-                    <Room id={i + 1} removeRoom={removeRoom} handleUpdateRoom={handleUpdateRooms} />
-                ))}
-
-                <div className="row g-3">
-                    <div className="col-sm-6 col-md-3">
-                        <button
-                            className="form-control __form-control"
-                            onClick={() => {
-                                handleAddRoom();
-                            }}
-                        >
-                            <span>Add Room</span>
-                            <Plus2 />
-                        </button>
-                    </div>
-                </div>
-                <h5 className="mt-4 r-title">Offer With</h5>
-                <div className="__form-radio-group pt-2">
-                    <label className="__form-radio">
-                        <div className="form-check">
-                            <input
-                                className="form-check-input"
-                                type="radio"
-                                name="offer-with"
-                                onChange={(e) => setvalue('')}
-                            />
-                            <div className="form-check-label">No Options</div>
-                        </div>
-                        <div className="text">
-                            VIP FORMULA: Hydrofoil + Transfer to Hotel $ 35.00 er Person instead of € 71.00 (round trip)
-                        </div>
-                    </label>
-                    <label className="__form-radio">
-                        <div className="form-check">
-                            <input
-                                className="form-check-input"
-                                type="radio"
-                                name="offer-with"
-                                onChange={(e) => setvalue('aliscafo')}
-                            />
-                            <div className="form-check-label">Aliscafo + Transfer</div>
-                        </div>
-                        <div className="text">
-                            Auto (fino a 4 metri) € 75.00 (andata e ritorno). I passeggeri che viaggiano con Cauto, il
-                            costo supplementare é di € 22.00 a persona (andata e ritorno).
-                        </div>
-                        {value == 'aliscafo' && (
-                            <>
-                                <br />
+            {userData ? (
+                <>
+                    <div className="inquiry--form">
+                        <div className="row g-3">
+                            <div className="col-sm-6 col-md-3">
                                 <Input
+                                    required
+                                    type="text"
+                                    value={userData.Nome}
+                                    name="Nome"
                                     handleChange={handleChange}
-                                    name="numeroBagagliAlis"
-                                    value={userData.numeroBagagliAlis}
-                                    label="Numero di Bagagli *"
-                                    select
-                                    options={options}
+                                    label="First Name"
+                                    placeholder="Your Name"
                                 />
-                            </>
-                        )}
-                    </label>
-                    <label className="__form-radio">
-                        <div className="form-check">
-                            <input
-                                className="form-check-input"
-                                type="radio"
-                                name="offer-with"
-                                onChange={(e) => setvalue('ferry')}
-                            />
-                            <div className="form-check-label">Ferry + Transfer</div>
-                        </div>
-                        <div className="text">
-                            from Naples or Pozzuoli wth tan to the hotel round trip € 2500 per person instead of € 5000.
-                        </div>
-                        {value == 'ferry' && (
-                            <>
-                                <br />
+                            </div>
+                            <div className="col-sm-6 col-md-3 relative">
+                                <div>
+                                    <Input
+                                        required
+                                        type="text"
+                                        name="Cognome"
+                                        value={userData.Cognome}
+                                        handleChange={handleChange}
+                                        label="Last Name"
+                                        placeholder="User Name"
+                                    />
+                                </div>
+                            </div>
+                            <div className="col-sm-6 col-md-3">
                                 <Input
-                                    value={userData.ferry}
+                                    required
+                                    type="email"
+                                    label="E-mail "
+                                    value={userData.Email}
                                     handleChange={handleChange}
-                                    name={'ferry'}
-                                    label="Dimensione Auto"
-                                    select
-                                    options={options2}
+                                    name="Email"
+                                    placeholder="Your Email"
                                 />
-                            </>
-                        )}
-                    </label>
-                    {/* <label className="__form-radio">
+                            </div>
+                            <div className="col-sm-6 col-md-3">
+                                <Input
+                                    required
+                                    label="Phone "
+                                    type="tel"
+                                    value={userData.Phone}
+                                    handleChange={handleChange}
+                                    name="Phone"
+                                    placeholder="1234567890"
+                                />
+                            </div>
+                            <div className="col-sm-6 col-md-3 col-lg-2 relative">
+                                <div className="">
+                                    <Input
+                                        handleChange={(e) => {
+                                            handleChange(e);
+                                            handleDepartureChange(e);
+                                        }}
+                                        value={userData.departure}
+                                        name="departure"
+                                        min={minDepartureDate}
+                                        max={maxDepartureDate}
+                                        label="Departure Date"
+                                        type="date"
+                                        ref={departureRef}
+                                        readOnly={readOnly}
+                                        placeholder="Select Departure Date"
+                                        onKeyDown={(e) => {
+                                            e.preventDefault();
+                                        }}
+                                    />
+                                </div>
+
+                                {/* {!userData.departure && ( */}
+                                <div className="absolute top-0 left-0 right-sm-0 w-100 px-2">
+                                    <Input
+                                        placeholder="Select depature date"
+                                        label="Departure Date"
+                                        value={userData.departure}
+                                        style={{
+                                            // textAlign: 'center',
+                                            paddingLeft: '7%',
+                                        }}
+                                        onClick={(e) => {
+                                            try {
+                                                departureRef?.current?.showPicker();
+                                                // departureRef.current.style.opacity = 1;
+                                            } catch (err) {
+                                                console.log(err);
+                                            }
+                                        }}
+                                    />
+                                </div>
+                                {/* )} */}
+                            </div>
+                            <div className="col-sm-6 col-md-3 col-lg-2 relative">
+                                <div className="">
+                                    <Input
+                                        handleChange={(e) => {
+                                            handleChange(e);
+                                            handleArrivalChange(e);
+                                        }}
+                                        value={userData.arrival}
+                                        name="arrival"
+                                        min={minArrivalDate}
+                                        max={maxArrivalDate}
+                                        required
+                                        label="Arrival Date"
+                                        ref={arrivalRef}
+                                        placeholder="Select Arrival Date"
+                                        type="date"
+                                        readOnly={readOnly}
+                                        onKeyDown={(e) => {
+                                            e.preventDefault();
+                                        }}
+                                    />
+                                </div>
+
+                                {/* {!userData.arrival && ( */}
+                                <div className="absolute top-0 left-0 w-100 px-2">
+                                    <Input
+                                        placeholder="Select arrival date"
+                                        label="Arrival Date"
+                                        value={userData.arrival}
+                                        style={{
+                                            // textAlign: 'center',
+                                            paddingLeft: '7%',
+                                        }}
+                                        onClick={(e) => {
+                                            try {
+                                                arrivalRef?.current?.showPicker();
+                                                // arrivalRef.current.style.opacity = 1;
+                                            } catch (err) {
+                                                console.log(err);
+                                            }
+                                        }}
+                                    />
+                                </div>
+                                {/* )} */}
+                            </div>
+                            <div className="col-sm-6 col-md-3 col-lg-2">
+                                <Input
+                                    value={userData.packageBoard}
+                                    handleChange={handleChange}
+                                    name="packageBoard"
+                                    label="Package"
+                                    placeholder="Half board"
+                                    select
+                                    options={packaged}
+                                />
+                            </div>
+                        </div>
+
+                        {/* <Room room={userData.rooms[0]} id={0} handleUpdateRoom={handleUpdateRooms} /> */}
+
+                        {userData.rooms.map((item, i) => (
+                            <Room room={item} id={i} removeRoom={removeRoom} handleUpdateRoom={handleUpdateRooms} />
+                        ))}
+
+                        <div className="row g-3">
+                            <div className="col-sm-6 col-md-3">
+                                <button
+                                    className="form-control __form-control"
+                                    onClick={() => {
+                                        handleAddRoom();
+                                    }}
+                                >
+                                    <span>Add Room</span>
+                                    <Plus2 />
+                                </button>
+                            </div>
+                        </div>
+                        <h5 className="mt-4 r-title">Offer With</h5>
+                        <div className="__form-radio-group pt-2">
+                            <label className="__form-radio">
+                                <div className="form-check">
+                                    <input
+                                        className="form-check-input"
+                                        type="radio"
+                                        name="offer-with"
+                                        onChange={(e) => setvalue('')}
+                                    />
+                                    <div className="form-check-label">No Options</div>
+                                </div>
+                                <div className="text">
+                                    VIP FORMULA: Hydrofoil + Transfer to Hotel $ 35.00 er Person instead of € 71.00
+                                    (round trip)
+                                </div>
+                            </label>
+                            <label className="__form-radio">
+                                <div className="form-check">
+                                    <input
+                                        className="form-check-input"
+                                        type="radio"
+                                        name="offer-with"
+                                        onChange={(e) => setvalue('aliscafo')}
+                                    />
+                                    <div className="form-check-label">Aliscafo + Transfer</div>
+                                </div>
+                                <div className="text">
+                                    Aliscafo da Napoli Beverello A/R € 35 compreso trasferimenti porto hotel
+                                </div>
+                                {value == 'aliscafo' && (
+                                    <>
+                                        <br />
+                                        <Input
+                                            handleChange={handleChange}
+                                            name="numeroBagagliAlis"
+                                            type="number"
+                                            value={userData.numeroBagagliAlis}
+                                            label="Numero di Bagagli *"
+                                            // select
+                                            // options={options}
+                                        />
+                                    </>
+                                )}
+                            </label>
+                            <label className="__form-radio">
+                                <div className="form-check">
+                                    <input
+                                        className="form-check-input"
+                                        type="radio"
+                                        name="offer-with"
+                                        onChange={(e) => setvalue('ferry')}
+                                    />
+                                    <div className="form-check-label">Traghetto + Transfer</div>
+                                </div>
+                                <div className="text">
+                                    Traghetto da Napoli Calata porta di Massa o Pozzuoli A/R € 25 compreso trasferimenti
+                                    porto hotel
+                                </div>
+                                {value == 'ferry' && (
+                                    <>
+                                        <br />
+                                        <Input
+                                            value={userData.ferry}
+                                            handleChange={handleChange}
+                                            name={'ferry'}
+                                            label="Dimensione Auto"
+                                            select
+                                            options={options2}
+                                        />
+                                    </>
+                                )}
+                            </label>
+                            {/* <label className="__form-radio">
                         <div className="form-check">
                             <input
                                 className="form-check-input"
@@ -353,117 +578,119 @@ const ViewInquiryForm = ({ Hotel, NomeModulo, totalPriceForUser, checkInDate, ch
                             </>
                         )}
                     </label> */}
-                    <label className="__form-radio">
-                        <div className="form-check">
-                            <input
-                                className="form-check-input"
-                                type="radio"
-                                name="offer-with"
-                                onChange={(e) => setvalue('viaggio')}
-                            />
-                            <div className="form-check-label">Viaggio dalla tua citta</div>
-                        </div>
-                        <div className="text">
-                            Train from the main Italian cities, with transfer from Naples station to the port, sea
-                            passages from Naples to Ischia, taxi from the port to the hotel starting from € 160.00 per
-                            person round trip.
-                        </div>
-                        {value == 'viaggio' && (
-                            <div className="row g-3 mt-2">
-                                <div className="col-sm-6">
-                                    <Input
-                                        name="trasporto"
-                                        handleChange={handleChange}
-                                        value={userData.trasporto}
-                                        label="Tipo di trasporto preferito"
-                                        select
-                                        options={options3}
+                            <label className="__form-radio">
+                                <div className="form-check">
+                                    <input
+                                        className="form-check-input"
+                                        type="radio"
+                                        name="offer-with"
+                                        onChange={(e) => setvalue('viaggio')}
                                     />
+                                    <div className="form-check-label">Viaggio dalla tua citta</div>
                                 </div>
-                                <div className="col-sm-6">
-                                    <Input
-                                        type="text"
-                                        value={userData.numeroBagagliViaggio}
-                                        name="numeroBagagliViaggio"
-                                        handleChange={handleChange}
-                                        label="Numero di Bagagli"
-                                    />
+                                <div className="text">
+                                    Train from the main Italian cities, with transfer from Naples station to the port,
+                                    sea passages from Naples to Ischia, taxi from the port to the hotel starting from €
+                                    160.00 per person round trip.
                                 </div>
-                            </div>
-                        )}
-                    </label>
-                </div>
-                <br />
-                <div className="msg-txt mb-4">
-                    Per offrirvi il miglior servizio Vi preghiamo di specificare, nel campo che segue, maggiori
-                    informazioni per i trasferimenti ed eventuali esigenze per la vostra vacanza
-                </div>
-                <textarea
-                    value={userData.note}
-                    name="note"
-                    onChange={handleChange}
-                    className="form-control __form-control p-3"
-                    placeholder="Text..."
-                ></textarea>
-                <div className="mt-3"></div>
-                <label className="form-check form--check">
-                    <input className="form-check-input" type="checkbox" value="" id="flexCheckDefault" />
-                    <span className="form-check-label">
-                        Ho preso visione e acconsento al{' '}
-                        <a href="#" className="text-base">
-                            trattamento dei miei dati personali in conformitä al Regolamento europeo 679/2016 *
-                        </a>
-                    </span>
-                </label>
-                <div className="mt-3"></div>
-                <label className="form-check form--check">
-                    <input className="form-check-input" type="checkbox" value="" id="flexCheckDefault" />
-                    <span className="form-check-label">
-                        Dichiaro di volermi iscrivere al servizio newsletter per ricevere Ie migliori offerte
-                    </span>
-                </label>
-            </div>
-            <div onClick={handeSubmit} className="pt-4">
-                <button className="cmn-btn w-100" type="button">
-                    {sending ? (
-                        <img style={{ width: '25px' }} src={loading.src} alt="loading" />
-                    ) : (
-                        <>
-                            Send Inquiry <Send />
-                        </>
-                    )}
-                </button>
-            </div>
+                                {value == 'viaggio' && (
+                                    <div className="row g-3 mt-2">
+                                        <div className="col-sm-6">
+                                            <Input
+                                                name="trasporto"
+                                                handleChange={handleChange}
+                                                value={userData.trasporto}
+                                                label="Tipo di trasporto preferito"
+                                                select
+                                                options={options3}
+                                            />
+                                        </div>
+                                        <div className="col-sm-6">
+                                            <Input
+                                                type="text"
+                                                value={userData.numeroBagagliViaggio}
+                                                name="numeroBagagliViaggio"
+                                                handleChange={handleChange}
+                                                label="Città di Partenza"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </label>
+                        </div>
+                        <br />
+                        <div className="msg-txt mb-4">
+                            Per offrirvi il miglior servizio Vi preghiamo di specificare, nel campo che segue, maggiori
+                            informazioni per i trasferimenti ed eventuali esigenze per la vostra vacanza
+                        </div>
+                        <textarea
+                            value={userData.note}
+                            name="note"
+                            onChange={handleChange}
+                            className="form-control __form-control p-3"
+                            placeholder="Text..."
+                        ></textarea>
+                        <div className="mt-3"></div>
+                        <label className="form-check form--check">
+                            <input className="form-check-input" type="checkbox" value="" id="flexCheckDefault" />
+                            <span className="form-check-label">
+                                Ho preso visione e acconsento al{' '}
+                                <a href="#" className="text-base">
+                                    trattamento dei miei dati personali in conformitä al Regolamento europeo 679/2016 *
+                                </a>
+                            </span>
+                        </label>
+                        <div className="mt-3"></div>
+                        <label className="form-check form--check">
+                            <input className="form-check-input" type="checkbox" value="" id="flexCheckDefault" />
+                            <span className="form-check-label">
+                                Dichiaro di volermi iscrivere al servizio newsletter per ricevere Ie migliori offerte
+                            </span>
+                        </label>
+                    </div>
+                    <div onClick={handeSubmit} className="pt-4">
+                        <button className="cmn-btn w-100" type="button">
+                            {sending ? (
+                                <img style={{ width: '25px' }} src={loading.src} alt="loading" />
+                            ) : (
+                                <>
+                                    Send Inquiry <Send />
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </>
+            ) : (
+                <>
+                    <img src={loading} height={'30px'} alt="" />
+                </>
+            )}
         </>
     );
 };
-const options = [
-    { val: '1 bagaglio', text: '1 bagaglio' },
-    { val: '5 bagaglio', text: '5 bagaglio' },
-    { val: '10 bagaglio', text: '10 bagaglio' },
-];
 const options2 = [
-    { val: 'Minore di 4 metri', text: 'Minore di 4 metri' },
-    { val: '5 bagaglio', text: '5 bagaglio' },
-    { val: '10 bagaglio', text: '10 bagaglio' },
+    {
+        options: 'traghetto con auto fino 4 mt. da Pozzuoli A/R € 75 - passeggeri € 22',
+        text: 'traghetto con auto fino 4 mt. da Pozzuoli A/R € 75 - passeggeri € 22',
+    },
+    {
+        options: 'traghetto con auto su. ai 4 mt. da Pozzuoli A/R € 100 - passeggeri € 22',
+        text: 'traghetto con auto su. ai 4 mt. da Pozzuoli A/R € 100 - passeggeri € 22',
+    },
 ];
 const options3 = [
     {
-        val: 'Bus da 85 € A/R compreso trasferimenti e passaggi marittimi',
+        options: 'Bus',
         text: 'Bus da 85 € A/R compreso trasferimenti e passaggi marittimi',
     },
     {
-        val: 'Treno alta velocità da € 99 A/R, compreso trasferimenti e passaggi marittimi',
+        options: 'Treno',
         text: 'Treno alta velocità da € 99 A/R, compreso trasferimenti e passaggi marittimi',
     },
     {
-        val: 'Volo da € 199 A/R, compreso trasferimenti e passaggi marittimi',
+        options: 'Aereo',
         text: 'Volo da € 199 A/R, compreso trasferimenti e passaggi marittimi',
     },
-];
-const options4 = [
-    { val: 'Milano', text: 'Milano' },
-    { val: 'Milano2', text: 'Milano2' },
 ];
 
 const packaged = [

@@ -1,4 +1,5 @@
 const { default: axios } = require('axios');
+const seedrandom = require('seedrandom');
 const {
     NINOX_BASE_API,
     NINOX_TEAM_ID,
@@ -18,9 +19,27 @@ const formatDate = (dateString) => {
     return new Date(formattedDate);
 };
 
-exports.initialData = catchAsync(async (req, res, next) => {
-    console.log(`${baseNinoxTableURL}/${NINOX_HOTEL_TABLE_ID}/records`);
+function generateRandomNumber(id) {
+    var rng = seedrandom(id.toString()); // Seed the random number generator with the ID
+    return Math.floor((rng() * 120000 + 5000) / 1000) + 'K'; // Generate a random number within the specified range
+}
 
+function calculateDaysAndNights(startDate, endDate) {
+    // Convert the dates to milliseconds
+    const startMillis = new Date(startDate).getTime();
+    const endMillis = new Date(endDate).getTime();
+
+    // Calculate the time difference in milliseconds
+    const timeDiffMillis = endMillis - startMillis;
+
+    var numberOfNights = Math.floor(timeDiffMillis / (1000 * 3600 * 24));
+
+    // Calculate the number of days
+    const days = Math.ceil(timeDiffMillis / (1000 * 60 * 60 * 24));
+
+    return { days, nights: numberOfNights };
+}
+exports.initialData = catchAsync(async (req, res, next) => {
     const comunes = [];
     const uniqueCommunes = [];
     const uniqueStelles = [];
@@ -182,15 +201,50 @@ exports.getHotelData = catchAsync(async (req, res, next) => {
         const checkInDateFromQuery = new Date(checkInDate);
         const checkOutDateFromQuery = new Date(checkOutDate);
 
-        const condition1 =
-            checkInDateFromRecord <= checkInDateFromQuery && checkOutDateFromRecord >= checkOutDateFromQuery;
-        const condition2 =
-            checkInDateFromRecord >= checkInDateFromQuery && checkInDateFromRecord <= checkOutDateFromQuery;
-        const condition3 =
-            checkOutDateFromRecord <= checkOutDateFromQuery && checkOutDateFromRecord >= checkInDateFromQuery;
+        const minNights = parseInt(record.fields['minimo notti']);
+        const maxNights = parseInt(record.fields['massimo notti']);
 
-        if (condition1 || condition2 || condition3) {
-            linkedHotels.push(record.fields.Hotel);
+        const { nights } = calculateDaysAndNights(checkInDateFromQuery, checkOutDateFromQuery);
+
+        const threeDaysBeforeCheckInDateFromQuery = new Date(checkInDateFromQuery).setDate(
+            checkInDateFromQuery.getDate() - 3
+        );
+        const threeDaysAfterCheckInDateFromQuery = new Date(checkInDateFromQuery).setDate(
+            checkInDateFromQuery.getDate() + 3
+        );
+
+        const threeDaysBeforeCheckOutDateFromQuery = new Date(checkOutDate).setDate(
+            checkOutDateFromQuery.getDate() - 3
+        );
+
+        const threeDaysAfterCheckOutDateFromQuery = new Date(checkOutDate).setDate(checkOutDateFromQuery.getDate() + 3);
+
+        const condition1 =
+            checkInDateFromRecord <= threeDaysAfterCheckInDateFromQuery &&
+            checkOutDateFromRecord >= threeDaysAfterCheckInDateFromQuery;
+        const condition2 =
+            checkInDateFromRecord <= threeDaysBeforeCheckInDateFromQuery &&
+            checkOutDateFromRecord >= threeDaysBeforeCheckInDateFromQuery;
+        const condition3 =
+            checkInDateFromRecord <= threeDaysBeforeCheckOutDateFromQuery &&
+            checkOutDateFromRecord >= threeDaysBeforeCheckOutDateFromQuery;
+
+        const condition4 =
+            checkInDateFromRecord <= threeDaysAfterCheckOutDateFromQuery &&
+            checkOutDateFromRecord >= threeDaysAfterCheckOutDateFromQuery;
+
+        if (condition1 || condition2 || condition3 || condition4) {
+            if (nights > 7) {
+                if (minNights === 7 || maxNights === 7) {
+                    linkedHotels.push(record.fields.Hotel);
+                }
+            } else {
+                if (nights - 1 === minNights || minNights === nights || nights + 1 === minNights) {
+                    linkedHotels.push(record.fields.Hotel);
+                } else if (nights - 1 === minNights || nights === maxNights || nights + 1 === maxNights) {
+                    linkedHotels.push(record.fields.Hotel);
+                }
+            }
         }
 
         if (i === offerteRecords.length - 1) {
@@ -211,7 +265,7 @@ exports.getHotelData = catchAsync(async (req, res, next) => {
     let hotelRecords = [];
     hotelRecordsResponse.data.forEach((hotel) => {
         if (filteredUniqueHotels.includes(hotel.id)) {
-            hotelRecords.push({ id: hotel.id, ...hotel.fields });
+            hotelRecords.push({ id: hotel.id, ...hotel.fields, reviews: generateRandomNumber(hotel.id) });
         }
     });
 

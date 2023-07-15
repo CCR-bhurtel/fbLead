@@ -15,12 +15,13 @@ const OfferPriceSlider = ({ offers, serial, setOfferButtonIn, offerButtonIn, hot
 
     const sliderRef = useRef(null);
 
-    const handlePrev = useCallback(() => {
-        if (!sliderRef.current) return;
-        sliderRef.current.swiper.slidePrev();
-    }, []);
+    const [innerOffers, setInnerOffers] = useState(offers);
 
-    const [activeData, setActiveData] = useState(offers[index]);
+    const [activeData, setActiveData] = useState(innerOffers[index]);
+
+    useEffect(() => {
+        setActiveData(innerOffers[index]);
+    }, [innerOffers]);
 
     const [faqs, setFaqs] = useState([
         {
@@ -45,10 +46,14 @@ const OfferPriceSlider = ({ offers, serial, setOfferButtonIn, offerButtonIn, hot
         },
     ]);
 
-    const handleNext = useCallback(() => {
-        if (!sliderRef.current) return;
-        sliderRef.current.swiper.slideNext();
-    }, []);
+    const handleSelectedItemChange = (i, nextIndex) => {
+        const newOffers = innerOffers.map((offer, index) => {
+            if (i === index) return { ...offer, selectedOption: nextIndex };
+            else return offer;
+        });
+        setInnerOffers(newOffers);
+    };
+
     const scrollRef = useRef();
     useEffect(() => {
         if (innerCollapse) {
@@ -61,18 +66,70 @@ const OfferPriceSlider = ({ offers, serial, setOfferButtonIn, offerButtonIn, hot
         }
     }, [innerCollapse]);
 
+    const [beginningReached, setBeginningReached] = useState(true);
+    const [endReached, setEndReached] = useState(false);
+
+    const handlePrev = useCallback(() => {
+        if (!sliderRef.current) return;
+
+        const swiperInstance = sliderRef.current.swiper;
+
+        swiperInstance.slidePrev();
+
+        setEndReached(false);
+
+        if (swiperInstance.translate === 0) {
+            setBeginningReached(true);
+        } else {
+            setBeginningReached(false);
+        }
+    }, []);
+
+    const handlePrevDrag = () => {
+        setEndReached(false);
+    };
+
+    const handleNextDrag = () => {
+        setBeginningReached(false);
+    };
+
+    const handleNext = useCallback(() => {
+        if (!sliderRef.current) return;
+        const swiperInstance = sliderRef.current.swiper;
+
+        swiperInstance.slideNext();
+
+        setBeginningReached(false);
+
+        // if (swiperInstance.activeIndex < swiperInstance.slides.length + 1) {
+        //     setEndReached(false);
+        // } else {
+        //     setEndReached(true);
+        // }
+    }, []);
+
     return (
         <>
             <div className="offer-item-middle-title gap-2 mb-3">
                 <span>Selezionate per te</span>
-                <div className="d-flex gap-2">
-                    <span className="prev" onClick={handlePrev}>
-                        <PrevIcon />
-                    </span>
-                    <span className="next" onClick={handleNext}>
-                        <NextIcon />
-                    </span>
-                </div>
+                {innerOffers.length > 1 ? (
+                    <div className="d-flex gap-2">
+                        <span
+                            className={`prev ${beginningReached ? 'swiper-control-disabled' : 'swiper-control-active'}`}
+                            onClick={handlePrev}
+                        >
+                            <PrevIcon />
+                        </span>
+                        <span
+                            className={`next ${endReached ? 'swiper-control-disabled' : 'swiper-control-active'}`}
+                            onClick={handleNext}
+                        >
+                            <NextIcon />
+                        </span>
+                    </div>
+                ) : (
+                    <></>
+                )}
             </div>
             <div className="offer-price-slider mb-4">
                 <Swiper
@@ -80,6 +137,14 @@ const OfferPriceSlider = ({ offers, serial, setOfferButtonIn, offerButtonIn, hot
                     slidesPerView={1.1}
                     spaceBetween={0}
                     modules={[Navigation, Pagination]}
+                    onSlideNextTransitionStart={handleNextDrag}
+                    onSlidePrevTransitionStart={handlePrevDrag}
+                    onReachBeginning={() => {
+                        setBeginningReached(true);
+                    }}
+                    onReachEnd={() => {
+                        setEndReached(true);
+                    }}
                     pagination={{ clickable: true }}
                     breakpoints={{
                         500: {
@@ -100,13 +165,13 @@ const OfferPriceSlider = ({ offers, serial, setOfferButtonIn, offerButtonIn, hot
                         },
                     }}
                 >
-                    {offers?.map((item, i) => (
+                    {innerOffers?.map((item, i) => (
                         <SwiperSlide key={i}>
                             <div
                                 className={`offer-price-slider-item ${i === index ? 'active' : ''}`}
                                 onClick={() => {
                                     setIndex(i);
-                                    setActiveData(offers[i]);
+                                    setActiveData(innerOffers[i]);
                                 }}
                                 style={{ margin: '1px' }}
                             >
@@ -115,9 +180,14 @@ const OfferPriceSlider = ({ offers, serial, setOfferButtonIn, offerButtonIn, hot
                                     <div className="duration">
                                         {item?.startDate} to {item?.endDate}
                                     </div>
-                                    <div className="text--small">{item?.dateString} - Full board</div>
+                                    <div className="text--small">
+                                        {item?.dateString} - {item.selectItems[item.selectedOption].text}
+                                    </div>
                                 </div>
-                                <h3 className="price">{item?.totalPriceForUser.toFixed(2)}€</h3>
+
+                                <h3 className="price">
+                                    {parseInt(item?.selectItems[item.selectedOption].price).toFixed(2)}€
+                                </h3>
                             </div>
                         </SwiperSlide>
                     ))}
@@ -141,7 +211,13 @@ const OfferPriceSlider = ({ offers, serial, setOfferButtonIn, offerButtonIn, hot
                         <div className="full-board">
                             <div className="full-board-top">
                                 <div>
-                                    <SelectDropDown selectItems={activeData.selectItems} />
+                                    <SelectDropDown
+                                        selectedOption={activeData.selectedOption}
+                                        handleChange={(i) => {
+                                            handleSelectedItemChange(index, i);
+                                        }}
+                                        selectItems={activeData.selectItems}
+                                    />
 
                                     <span>Bevande {activeData['Bevande']}</span>
                                 </div>
@@ -197,9 +273,10 @@ const OfferPriceSlider = ({ offers, serial, setOfferButtonIn, offerButtonIn, hot
                 <ViewInquiryForm
                     checkInDate={checkInDate}
                     checkOutDate={checkOutDate}
+                    offer={activeData}
                     Hotel={hotel['Nome Hotel']}
                     NomeModulo={hotel['NomeModulo']}
-                    totalPriceForUser={activeData.totalPriceForUser.toFixed(2)}
+                    totalPriceForUser={activeData.selectItems[activeData.selectedOption].price.toFixed()}
                 />
             </div>
         </>

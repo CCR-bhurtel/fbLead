@@ -27,6 +27,8 @@ function calculateDaysAndNights(startDate, endDate) {
     return { days, nights: numberOfNights };
 }
 
+exports.calculateDaysAndNights = calculateDaysAndNights;
+
 const fetchOffers = async (offertaIds) => {
     const offers = [];
 
@@ -40,6 +42,7 @@ const fetchOffers = async (offertaIds) => {
                     },
                 }
             );
+
             offers.push({ id: response.data.id, ...response.data.fields });
         } catch (err) {
             continue;
@@ -57,47 +60,93 @@ module.exports = catchAsync(async (req, res, next) => {
     const outDate = new Date(checkOutDate);
 
     const { nights } = calculateDaysAndNights(inDate, outDate);
-    const offers = await fetchOffers(offertaIds);
+    const fetchedOffers = await fetchOffers(offertaIds);
 
-    const getPriceForOffer = (offer) => {
-        const bb = parseFloat(offer['Prezzo BB']);
-        const hb = parseFloat(offer['Prezzo HB']);
-        const fb = parseFloat(offer['Prezzo FB']);
+    const offers = fetchedOffers.filter((offer) => {
+        const minNights = parseInt(offer['minimo notti']);
+        const maxNights = parseInt(offer['massimo notti']);
 
-        let price;
+        if (nights > 7) {
+            if (minNights >= 7 || maxNights >= 7) {
+                return true;
+            }
+        } else {
+            if (nights - 1 <= minNights && nights + 1 >= minNights) {
+                return true;
+            } else if (nights - 1 <= maxNights && nights + 1 >= maxNights) {
+                return true;
+            }
+        }
+        return false;
+    });
 
-        if (offer['Tipo offerta'] === 'Costo giornaliero') {
-            price = bb || hb || fb;
-        } else if (offer['Tipo offerta'] === 'Totale offerta') {
-            let prezzoLow = bb || hb || fb;
+    // const getPriceForOffer = (offer) => {
+    //     const bb = parseFloat(offer['Prezzo BB']);
+    //     const hb = parseFloat(offer['Prezzo HB']);
+    //     const fb = parseFloat(offer['Prezzo FB']);
 
-            price = (prezzoLow / offer['minimo notti']).toFixed(2);
+    //     let price;
+
+    //     if (offer['Tipo offerta'] === 'Costo giornaliero') {
+    //         price = bb || hb || fb;
+    //     } else if (offer['Tipo offerta'] === 'Totale offerta') {
+    //         let prezzoLow = bb || hb || fb;
+
+    //         price = (prezzoLow / offer['minimo notti']).toFixed(2);
+    //     }
+
+    //     return price;
+    // };
+
+    const getPriceForOfferWithBoardOption = (optionPrice, offer) => {
+        let totalPrice;
+        let totalNights;
+        const minNights = parseInt(offer['minimo notti']);
+        const maxNights = parseInt(offer['massimo notti']);
+        if (minNights === maxNights) {
+            totalNights = minNights;
+        } else {
+            if (nights >= minNights && nights <= maxNights) {
+                totalNights = nights;
+            } else {
+                totalNights = nights;
+            }
         }
 
-        return price;
+        if (offer['Tipo offerta'] === 'Costo giornaliero') {
+            totalPrice = optionPrice * totalNights;
+        } else if (offer['Tipo offerta'] === 'Totale offerta') {
+            totalPrice = totalNights === minNights ? optionPrice : (optionPrice / minNights) * nights;
+        }
+
+        return totalPrice;
     };
 
     const offersWithPriceAndTimeDifference = offers.map((offer) => {
-        const priceForOffer = getPriceForOffer(offer);
         const dateA = new Date(offer['Valida dal']);
 
         const dateB = new Date(offer['Valida al']);
         // const timeDifference = Math.abs(new Date(offer['Valida dal']) - new Date(inDate));
 
-        let totalPriceForUser;
+        let priceOption;
+
         const minNights = parseInt(offer['minimo notti']);
         const maxNights = parseInt(offer['massimo notti']);
         if (minNights === maxNights) {
-            totalPriceForUser = minNights * priceForOffer;
+            priceOption = 1;
             offer.dateString = `${minNights} Nights`;
         } else {
             if (nights >= minNights && nights <= maxNights) {
-                totalPriceForUser = nights * priceForOffer;
+                priceOption = 2;
                 offer.dateString = `${nights} Nights`;
             } else {
+                priceOption = 3;
                 offer.overFlow = true;
-                totalPriceForUser = minNights * priceForOffer;
-                offer.dateString = `${minNights} Nights - ${maxNights} Nights`;
+
+                offer.dateString =
+                    Math.abs(minNights - nights) < Math.abs(maxNights - nights)
+                        ? `${minNights} Nights `
+                        : `${maxNights} Nights`;
             }
         }
         const selectItems = [];
@@ -107,19 +156,29 @@ module.exports = catchAsync(async (req, res, next) => {
         const fb = parseFloat(offer['Prezzo FB']);
 
         if (fb && fb > 0) {
-            selectItems.push('Pensione Completa');
+            let price = getPriceForOfferWithBoardOption(fb, offer, priceOption);
+
+            selectItems.push({ text: 'Pensione Completa', price });
         }
+
         if (bb && bb > 0) {
-            selectItems.push('Bed & Breakfast');
+            selectItems.push({
+                text: 'Bed & Brekfast',
+                price: getPriceForOfferWithBoardOption(bb, offer, priceOption),
+            });
         }
 
         if (hb && hb > 0) {
-            selectItems.push('Mezza Pensione');
+            selectItems.push({
+                price: getPriceForOfferWithBoardOption(hb, offer, 3),
+                text: 'Mexxa Pensione',
+            });
         }
 
         return {
             ...offer,
-            totalPriceForUser,
+            selectedOption: 0,
+
             selectItems,
             startDate: `${dateA.toLocaleDateString(undefined, {
                 day: 'numeric',
@@ -143,12 +202,23 @@ module.exports = catchAsync(async (req, res, next) => {
         const endDiffA = endDateA - outDate;
         const endDiffB = endDateB - outDate;
 
-        if (startDiffA > 0 && startDiffB <= 0) {
-            return 1;
-        }
         if (startDiffA <= 0 && startDiffB > 0) {
+            //&& condA && !condB
             return -1;
         }
+
+        if (startDiffA > 0 && startDiffB <= 0) {
+            //&& condB && !condA
+            return 1;
+        }
+
+        // if (condA && !condB) {
+        //     return -1;
+        // }
+
+        // if (condB && !condA) {
+        //     return 1;
+        // }
 
         const diffA = Math.abs(startDiffA) + Math.abs(endDiffA);
         const diffB = Math.abs(startDiffB) + Math.abs(endDiffB);

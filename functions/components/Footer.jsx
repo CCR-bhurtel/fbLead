@@ -60,7 +60,7 @@ const Footer = ({ initialConfigData, config, setConfig }) => {
         onScreenResize={handleKeyboardEvent}
       /> */}
             <div className="container-fluid">
-                <div className="footer-wrapper d-none d-sm-flex">
+                <div style={{zIndex:-1}}  className="footer-wrapper d-none d-sm-flex">
                     <DropdownGroup
                         handleChange={(value) => handleFooterConfig('comune', value)}
                         value={footerConfig.comune}
@@ -82,7 +82,7 @@ const Footer = ({ initialConfigData, config, setConfig }) => {
                         handleChange={(value) => handleFooterConfig('fascio', value)}
                         label="Fascia di Prezzo "
                         name="fascio"
-                        smText="(per persona)"
+                        smText="(giorno)"
                         icon={<Dollar />}
                         value={footerConfig.fascio}
                         data={fascio}

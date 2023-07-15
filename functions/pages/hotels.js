@@ -10,7 +10,6 @@ import formatDate from '../utils/formatDate';
 import Loading from '../components/Layouts/Loading';
 import { Toaster, toast } from 'react-hot-toast';
 import getDateString from '../utils/getDateString';
-import { useLocation } from 'react-router-dom';
 
 function Hotel() {
     const [loadingInitialData, setLoadingInitialData] = useState(false);
@@ -38,7 +37,6 @@ function Hotel() {
 
     const setConfigFromInitialAppState = () => {
         const { checkInDate, checkOutDate } = router.query;
-        console.log(initialConfigData);
 
         const config = {
             fascio: initialConfigData.fascio[0],

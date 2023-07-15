@@ -808,9 +808,6 @@ footer {
         .offer-left-side {
             flex-grow: 1;
             column-gap: 36px;
-            @include breakpoint(xl) {
-                column-gap: 48px;
-            }
         }
     }
     @include breakpoint(max-sm) {
@@ -913,12 +910,14 @@ footer {
     display: flex;
     flex-wrap: wrap;
     gap: 24px;
+    margin-right: 10px;
     .slider-area {
         width: 100%;
         position: relative;
         overflow: hidden;
         @include breakpoint(md) {
             max-width: 280px;
+            margin-right: 5px;
         }
         img {
             width: 100%;
@@ -1013,7 +1012,7 @@ footer {
     font-weight: 500;
     font-size: 24px;
     line-height: 34px;
-    color: var(--base-2);
+    // color: var(--base-2);
     font-family: var(--heading-fonts);
 }
 .offer-item-middle {
@@ -1038,14 +1037,22 @@ footer {
         }
     }
 }
-.prev:not(:hover) {
+// .prev:not(:hover) {
+//     color: var(--text) !important;
+//     opacity: 0.6;
+// }
+.swiper-control-active {
+    color: var(--base-2) !important;
+}
+
+.swiper-control-disabled {
     color: var(--text) !important;
     opacity: 0.6;
 }
 .offer-price-slider {
     .prev,
     .next {
-        color: var(--base-2);
+        color: var(--text) !important;
     }
     .swiper-button-disabled {
         color: var(--text);

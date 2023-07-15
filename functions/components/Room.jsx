@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Input from './Input';
 
 function Room({ room, id, removeRoom, handleUpdateRoom }) {
-    const [roomData, setRoomData] = useState({ noofAdults: 2, noofChildren: 2, ages: [10, 12] });
+    const [roomData, setRoomData] = useState({ noofAdults: 2, noofChildren: 0, ages: [] });
 
     const [options, setOptions] = useState({});
 
