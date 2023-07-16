@@ -168,12 +168,7 @@ const OfferItem = (props) => {
                             </span>
                             <div className="d-flex align-items-center review">
                                 <img src={review.src} alt="" />
-                                <button
-                                    className="outline-0 border-0 bg-transparent position-relative"
-                                    style={{ marginLeft: '-25px' }}
-                                >
-                                    <img src={plus.src} alt="" />
-                                </button>
+
                                 <div>
                                     {hotel['Stelle struttura'] ? <div>{hotel['Stelle struttura'][0]}/5</div> : <></>}
                                     <div className="subtxt">({hotel.reviews} Reviews)</div>
@@ -220,7 +215,7 @@ const OfferItem = (props) => {
                             >
                                 {offerOpen ? (
                                     <span className="text-title">
-                                        Close Offer <AngleUp />
+                                        Chiudi Offerta <AngleUp />
                                     </span>
                                 ) : (
                                     <span>
@@ -229,9 +224,16 @@ const OfferItem = (props) => {
                                 )}
                             </button>
                             <button type="button" className="outline-0 bg-transparent whatsapp-btn">
-                                <Whatsapp />
+                                <a
+                                    href="https://api.whatsapp.com/send/?phone=3908119758555&text=Richiesta%20Informazioni%20per%20L%27hotel%20&type=phone_number&app_absent=0
+"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    <Whatsapp />
+                                </a>
                             </button>
-                            <a href="#0" className="tel-btn">
+                            <a href="Tel:+08119758555" className="tel-btn">
                                 <div className="icon">
                                     <Phone color="#24A9E0" />
                                 </div>

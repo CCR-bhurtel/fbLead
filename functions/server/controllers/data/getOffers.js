@@ -65,6 +65,11 @@ module.exports = catchAsync(async (req, res, next) => {
     const offers = fetchedOffers.filter((offer) => {
         const minNights = parseInt(offer['minimo notti']);
         const maxNights = parseInt(offer['massimo notti']);
+        const checkOutDateFromOffer = new Date(offer['Valida al']);
+        checkOutDateFromOffer.setDate(checkOutDateFromOffer.getDate() - 7);
+
+        const condition_new = checkOutDateFromOffer >= new Date();
+        if (!condition_new) return false;
 
         if (nights > 7) {
             if (minNights >= 7 || maxNights >= 7) {
@@ -134,19 +139,19 @@ module.exports = catchAsync(async (req, res, next) => {
         const maxNights = parseInt(offer['massimo notti']);
         if (minNights === maxNights) {
             priceOption = 1;
-            offer.dateString = `${minNights} Nights`;
+            offer.dateString = `${minNights} Notti`;
         } else {
             if (nights >= minNights && nights <= maxNights) {
                 priceOption = 2;
-                offer.dateString = `${nights} Nights`;
+                offer.dateString = `${nights} Notti`;
             } else {
                 priceOption = 3;
                 offer.overFlow = true;
 
                 offer.dateString =
                     Math.abs(minNights - nights) < Math.abs(maxNights - nights)
-                        ? `${minNights} Nights `
-                        : `${maxNights} Nights`;
+                        ? `${minNights} Notti `
+                        : `${maxNights} Notti`;
             }
         }
         const selectItems = [];

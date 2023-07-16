@@ -40,7 +40,7 @@ function calculateDaysAndNights(startDate, endDate) {
     return { days, nights: numberOfNights };
 }
 exports.initialData = catchAsync(async (req, res, next) => {
-    const comunes = [];
+    const comunes = ["Tutta l'isola"];
     const uniqueCommunes = [];
     const uniqueStelles = [];
     const stelles = [];

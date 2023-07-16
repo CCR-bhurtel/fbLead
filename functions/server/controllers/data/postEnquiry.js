@@ -126,23 +126,12 @@ module.exports = catchAsync(async (req, res, next) => {
     let tipi = '';
 
     rooms.forEach((room, i) => {
-        let tipiForRoom = `stanza ${i + 1} | ${room.noofAdults} adulti ${
-            room.noofChildren ? `-${room.noofChildren} (${room.ages.join('-')})` : ''
-        }}, `;
+        let tipiForRoom = `stanza ${i + 1} || ${room.noofAdults} adulti - ${room.noofChildren} bambini${
+            room.noofChildren ? ` (${room.ages.join('-')})` : ''
+        }`;
         tipi += tipiForRoom;
     });
-    let agesOfBambani = rooms[0].ages ? rooms[0].ages.sort((a, b) => a - b) : [];
-    let minAgeOfBambini = agesOfBambani[0];
-    let maxAgeOfBambini = agesOfBambani[agesOfBambani.length - 1];
 
-    tipi += rooms[0].noofAdults ? `${rooms[0].noofAdults} adulti ` : '';
-    tipi += rooms[0].noofChildren ? `- ${rooms[0].noofChildren} bambini` : '';
-
-    if (agesOfBambani.length === 1) {
-        tipi += ` (${maxAgeOfBambini})`;
-    } else if (agesOfBambani.length > 1) {
-        tipi += ` (${minAgeOfBambini}-${maxAgeOfBambini})`;
-    }
     const data = {
         Modulo: NomeModulo,
         'Data e Ora': new Date(postedDate),

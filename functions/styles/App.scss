@@ -943,6 +943,9 @@ footer {
     .slider-content-area {
         width: 0;
         flex-grow: 1;
+        margin-left: -25px;
+        padding-right: 15px;
+
         .title {
             font-weight: 600;
             font-size: 22px;
@@ -998,6 +1001,8 @@ footer {
     }
     @include breakpoint(max-md) {
         .slider-content-area {
+            margin-left: 0px;
+            padding-right: 0px;
             width: 100%;
         }
     }

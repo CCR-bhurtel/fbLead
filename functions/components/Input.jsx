@@ -2,7 +2,7 @@ import React, { createRef, useRef, useState } from 'react';
 
 const Input = React.forwardRef((props, ref) => {
     const { required, type, value, handleChange, label, select, options, name, optional, ...rest } = props;
-    const inputRef = createRef(ref);
+  
     return (
         <div className="position-relative">
             <label className="__form-label">

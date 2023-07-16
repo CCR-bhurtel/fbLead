@@ -25,22 +25,22 @@ const OfferPriceSlider = ({ offers, serial, setOfferButtonIn, offerButtonIn, hot
 
     const [faqs, setFaqs] = useState([
         {
-            title: 'Description',
+            title: 'Descrizione',
             paragraph: activeData['Descrizione offerta'],
             text: [],
         },
         {
-            title: 'Package Included ',
+            title: 'Pacchetto Incluso ',
             paragraph: activeData['Pacchetto'],
             text: [],
         },
         {
-            title: 'Supplements',
+            title: 'Supplementi',
             paragraph: activeData['Supplementi offerta'],
             text: [],
         },
         {
-            title: 'Reductions',
+            title: 'Riduzioni',
             paragraph: activeData['Riduzioni offerta'],
             text: [],
         },
@@ -74,16 +74,17 @@ const OfferPriceSlider = ({ offers, serial, setOfferButtonIn, offerButtonIn, hot
 
         const swiperInstance = sliderRef.current.swiper;
 
-        swiperInstance.slidePrev();
+        if (!beginningReached) {
+            setEndReached(false);
+            swiperInstance.slidePrev();
 
-        setEndReached(false);
-
-        if (swiperInstance.translate === 0) {
-            setBeginningReached(true);
-        } else {
-            setBeginningReached(false);
+            if (swiperInstance.translate === 0) {
+                setBeginningReached(true);
+            } else {
+                setBeginningReached(false);
+            }
         }
-    }, []);
+    }, [beginningReached]);
 
     const handlePrevDrag = () => {
         setEndReached(false);
@@ -97,16 +98,12 @@ const OfferPriceSlider = ({ offers, serial, setOfferButtonIn, offerButtonIn, hot
         if (!sliderRef.current) return;
         const swiperInstance = sliderRef.current.swiper;
 
-        swiperInstance.slideNext();
+        if (!endReached) {
+            swiperInstance.slideNext();
 
-        setBeginningReached(false);
-
-        // if (swiperInstance.activeIndex < swiperInstance.slides.length + 1) {
-        //     setEndReached(false);
-        // } else {
-        //     setEndReached(true);
-        // }
-    }, []);
+            setBeginningReached(false);
+        }
+    }, [endReached]);
 
     return (
         <>
@@ -116,13 +113,13 @@ const OfferPriceSlider = ({ offers, serial, setOfferButtonIn, offerButtonIn, hot
                     <div className="d-flex gap-2">
                         <span
                             className={`prev ${beginningReached ? 'swiper-control-disabled' : 'swiper-control-active'}`}
-                            onClick={handlePrev}
+                            onClick={!beginningReached ? handlePrev : () => {}}
                         >
                             <PrevIcon />
                         </span>
                         <span
                             className={`next ${endReached ? 'swiper-control-disabled' : 'swiper-control-active'}`}
-                            onClick={handleNext}
+                            onClick={!endReached ? handleNext : () => {}}
                         >
                             <NextIcon />
                         </span>
@@ -236,7 +233,7 @@ const OfferPriceSlider = ({ offers, serial, setOfferButtonIn, offerButtonIn, hot
                                 )}
                             </ul>
                             <blockquote className="mb-4 blockquote">
-                                FOR THIS OFFER, PAY WITH ZERO INTEREST IN 3 COMFORTABLE INSTALLMENTS WITH
+                                PER QUESTA OFFERTA PUOI PAGARE CON INTERESSI ZERO IN 3 COMODE RATE CON SCALAPAY{' '}
                             </blockquote>
                             <div className="text-center">
                                 <img src={scalapay} alt="" className="mw-100" />

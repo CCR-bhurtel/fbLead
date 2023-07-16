@@ -63,6 +63,7 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
     const [value, setvalue] = useState('');
 
     const [dateValid, setDateValid] = useState(checkDateValidity(offer, checkInDate, checkOutDate));
+    const [buttonDisabled, setButtonDisabled] = useState(false);
 
     const [userData, setUserData] = useState({
         Nome: '',
@@ -73,7 +74,7 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
         departure: '',
 
         arrival: '',
-        packageBoard: 'Half Board',
+        packageBoard: 'Mezza pensione"',
         rooms: [{ noofAdults: 2, noofChildren: 0, ages: [] }],
         Citta: '',
         note: '',
@@ -181,6 +182,10 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
 
     const handeSubmit = (e) => {
         e.preventDefault();
+        if (buttonDisabled) {
+            toast.error('Wait for a while');
+            return;
+        }
         const dataToBePosted = { ...userData };
         if (!userData.Nome) {
             toast.error('Please enter name');
@@ -242,7 +247,7 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
                     return;
                 }
 
-                dataToBePosted.Citta = `${userData.trasporto} con ${userData.numeroBagagliViaggio}`;
+                dataToBePosted.Citta = `${userData.numeroBagagliViaggio} con ${userData.trasporto}`;
 
                 break;
 
@@ -256,6 +261,10 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
             .then((res) => {
                 toast.success('Success');
                 setSending(false);
+                setButtonDisabled(true);
+                setTimeout(() => {
+                    setButtonDisabled(false);
+                }, 10000);
                 // setUserData({
                 //     Nome: '',
                 //     Cognome: '',
@@ -317,8 +326,8 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
                                     value={userData.Nome}
                                     name="Nome"
                                     handleChange={handleChange}
-                                    label="First Name"
-                                    placeholder="Your Name"
+                                    label="Nome"
+                                    placeholder="Il tuo nome"
                                 />
                             </div>
                             <div className="col-sm-6 col-md-3 relative">
@@ -329,8 +338,8 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
                                         name="Cognome"
                                         value={userData.Cognome}
                                         handleChange={handleChange}
-                                        label="Last Name"
-                                        placeholder="User Name"
+                                        label="Cognome"
+                                        placeholder="Il tuo cognome"
                                     />
                                 </div>
                             </div>
@@ -342,13 +351,13 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
                                     value={userData.Email}
                                     handleChange={handleChange}
                                     name="Email"
-                                    placeholder="Your Email"
+                                    placeholder="La tua email"
                                 />
                             </div>
                             <div className="col-sm-6 col-md-3">
                                 <Input
                                     required
-                                    label="Phone "
+                                    label="Numero di Telefono"
                                     type="tel"
                                     value={userData.Phone}
                                     handleChange={handleChange}
@@ -367,11 +376,11 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
                                         name="departure"
                                         min={minDepartureDate}
                                         max={maxDepartureDate}
-                                        label="Departure Date"
+                                        label="Data Check In"
                                         type="date"
                                         ref={departureRef}
                                         readOnly={readOnly}
-                                        placeholder="Select Departure Date"
+                                        placeholder="Seleziona la data di partenza"
                                         onKeyDown={(e) => {
                                             e.preventDefault();
                                         }}
@@ -381,8 +390,8 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
                                 {/* {!userData.departure && ( */}
                                 <div className="absolute top-0 left-0 right-sm-0 w-100 px-2">
                                     <Input
-                                        placeholder="Select depature date"
-                                        label="Departure Date"
+                                        placeholder="Seleziona la data di partenza"
+                                        label="Data Check In"
                                         value={userData.departure}
                                         style={{
                                             // textAlign: 'center',
@@ -412,9 +421,9 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
                                         min={minArrivalDate}
                                         max={maxArrivalDate}
                                         required
-                                        label="Arrival Date"
+                                        label="Data Check Out"
                                         ref={arrivalRef}
-                                        placeholder="Select Arrival Date"
+                                        placeholder="Seleziona la data di arrivo"
                                         type="date"
                                         readOnly={readOnly}
                                         onKeyDown={(e) => {
@@ -426,8 +435,8 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
                                 {/* {!userData.arrival && ( */}
                                 <div className="absolute top-0 left-0 w-100 px-2">
                                     <Input
-                                        placeholder="Select arrival date"
-                                        label="Arrival Date"
+                                        placeholder="Seleziona la data di arrivo"
+                                        label="Data Check Out"
                                         value={userData.arrival}
                                         style={{
                                             // textAlign: 'center',
@@ -450,8 +459,7 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
                                     value={userData.packageBoard}
                                     handleChange={handleChange}
                                     name="packageBoard"
-                                    label="Package"
-                                    placeholder="Half board"
+                                    label="Pacchetto"
                                     select
                                     options={packaged}
                                 />
@@ -472,7 +480,7 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
                                         handleAddRoom();
                                     }}
                                 >
-                                    <span>Add Room</span>
+                                    <span>Aggiungi Stanza</span>
                                     <Plus2 />
                                 </button>
                             </div>
@@ -487,12 +495,9 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
                                         name="offer-with"
                                         onChange={(e) => setvalue('')}
                                     />
-                                    <div className="form-check-label">No Options</div>
+                                    <div className="form-check-label">Nessuna Opzione</div>
                                 </div>
-                                <div className="text">
-                                    VIP FORMULA: Hydrofoil + Transfer to Hotel $ 35.00 er Person instead of € 71.00
-                                    (round trip)
-                                </div>
+                                <div className="text">Nessun trasporto incluso</div>
                             </label>
                             <label className="__form-radio">
                                 <div className="form-check">
@@ -648,17 +653,25 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
                             </span>
                         </label>
                     </div>
-                    <div onClick={handeSubmit} className="pt-4">
-                        <button className="cmn-btn w-100" type="button">
-                            {sending ? (
-                                <img style={{ width: '25px' }} src={loading.src} alt="loading" />
-                            ) : (
-                                <>
-                                    Send Inquiry <Send />
-                                </>
-                            )}
-                        </button>
-                    </div>
+                    {buttonDisabled ? (
+                        <div className="pt-4">
+                            <button style={{ opacity: 0.7 }} className="cmn-btn w-100" type="button">
+                                Preventivo Richiesto
+                            </button>
+                        </div>
+                    ) : (
+                        <div onClick={handeSubmit} className="pt-4">
+                            <button className="cmn-btn w-100" type="button">
+                                {sending ? (
+                                    <img style={{ width: '25px' }} src={loading.src} alt="loading" />
+                                ) : (
+                                    <>
+                                        Richiedi Preventivo <Send />
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    )}
                 </>
             ) : (
                 <>
@@ -696,11 +709,11 @@ const options3 = [
 const packaged = [
     {
         options: '1',
-        text: 'Half board',
+        text: 'Mezza pensione',
     },
     {
         options: '2',
-        text: 'Full board',
+        text: 'Pensione completa',
     },
 ];
 

@@ -13,7 +13,7 @@ function Room({ room, id, removeRoom, handleUpdateRoom }) {
                 text: index + 1,
             })),
             chilren: Array.from({ length: 4 - roomData.noofAdults + 1 }, (_, index) => ({ val: index, text: index })),
-            ages: Array.from({ length: 15 }, (_, index) => ({ val: index + 1, text: index + 1 })),
+            ages: Array.from({ length: 17 }, (_, index) => ({ val: index + 1, text: index + 1 })),
         });
         handleUpdateRoom(roomData, id);
     }, [roomData]);
@@ -43,7 +43,7 @@ function Room({ room, id, removeRoom, handleUpdateRoom }) {
     return (
         <div>
             <h5 className="text-base mt-4 r-title">
-                {`Number of people (Room ${id + 1})`}{' '}
+                {`Numero di persone (Stanza ${id + 1})`}{' '}
                 {id > 0 && (
                     <button
                         className="border-0 outline-0 bg-transparent text-danger d-none d-sm-inline-block"
@@ -60,7 +60,7 @@ function Room({ room, id, removeRoom, handleUpdateRoom }) {
                         select
                         handleChange={handleChange}
                         value={roomData.noofAdults}
-                        label="Adults"
+                        label="Adulti"
                         options={options.adults}
                     />
                 </div>
@@ -68,7 +68,7 @@ function Room({ room, id, removeRoom, handleUpdateRoom }) {
                     <Input
                         name="noofChildren"
                         value={roomData.noofChildren}
-                        label="Children"
+                        label="Bambini"
                         handleChange={(e) => {
                             handleNoofChildren(e.target.value);
                         }}
@@ -86,7 +86,7 @@ function Room({ room, id, removeRoom, handleUpdateRoom }) {
                             }}
                             select
                             options={options.ages}
-                            label={`Age(Child ${i + 1})`}
+                            label={`Age(Child ${i + 1}) Età ${i + 1}`}
                             placeholder="DD/MM/YY"
                         />
                     </div>
