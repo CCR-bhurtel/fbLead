@@ -40,44 +40,41 @@ function calculateDaysAndNights(startDate, endDate) {
     return { days, nights: numberOfNights };
 }
 exports.initialData = catchAsync(async (req, res, next) => {
-    const comunes = ["Tutta l'isola"];
+    const comunes = [{ name: "Tutta l'isola" }];
     const uniqueCommunes = [];
     const uniqueStelles = [];
-    const stelles = [];
+    const stelles = [{ name: 'Tutti' }];
     const distances = [
+        { name: 'Tutti', value: 0 },
         {
-            name: '1 km - 5 km',
-            value: 0,
-        },
-        {
-            name: '5 km - 10 km',
+            name: '0 mt - 500 mt',
             value: 1,
         },
         {
-            name: '1 km - 15 km',
+            name: '500 mt - 1 km',
             value: 2,
         },
         {
-            name: '50km+ ',
+            name: '1 km+',
             value: 3,
         },
     ];
 
     const fascio = [
         {
-            name: '10€ - 100€',
+            name: 'Tutti',
             value: 0,
         },
         {
-            name: '200€ - 500€',
+            name: 'fino a 40€',
             value: 1,
         },
         {
-            name: '500€ - 1000€',
+            name: 'tra 40€ e 80€',
             value: 2,
         },
         {
-            name: '1000€ - 3000€',
+            name: 'più di 80€',
             value: 3,
         },
     ];
@@ -119,39 +116,63 @@ const filterCommune = (comune, records) => {
 const filterFascio = (fascio, records) => {
     switch (fascio.value) {
         case 0:
-            return records.filter((record) => record['Prezzo Minore'] >= 10 && record['Prezzo Minore'] <= 100);
+            return records;
         case 1:
-            return records.filter((record) => record['Prezzo Minore'] >= 200 && record['Prezzo Minore'] <= 500);
+            return records.filter((record) => record['Prezzo Minore'] < 40);
         case 2:
-            return records.filter((record) => record['Prezzo Minore'] >= 500 && record['Prezzo Minore'] <= 1000);
+            return records.filter((record) => record['Prezzo Minore'] >= 40 && record['Prezzo Minore'] <= 80);
 
         case 3:
-            return records.filter((record) => record['Prezzo Minore'] >= 1000 && record['Prezzo Minore'] <= 3000);
+            return records.filter((record) => record['Prezzo Minore'] > 80);
 
         default:
             return records;
     }
 };
 
+const getDistance = (record) => {
+    let distance = record['Distanza mare'];
+
+    if (!distance || !distance.length) return null;
+
+    const distanceSplitted = distance.split(' ');
+
+    let distanceValue = parseFloat(distanceSplitted[0].replace(',', '.'));
+
+    let distanceUnit = distanceSplitted[1].trim();
+
+    if (isNaN(distanceValue)) return 0;
+
+    if (distanceUnit !== 'mt' && distanceUnit !== 'mt.') {
+        distanceValue = distanceValue * 1000;
+    }
+
+    return distanceValue;
+};
+
 const filterDistance = (distance, records) => {
     switch (distance.value) {
         case 0:
-            return records.filter(
-                (record) => record['Distanza centro'].split(' ')[0] >= 1 && record['Distanza centro'].split(' ')[0] <= 5
-            );
+            return records;
+
         case 1:
-            return records.filter(
-                (record) =>
-                    record['Distanza centro'].split(' ')[0] >= 5 && record['Distanza centro'].split(' ')[0] <= 15
-            );
+            return records.filter((record) => {
+                const distance = getDistance(record);
+                return  distance >= 0 && distance < 500;
+            });
         case 2:
-            return records.filter(
-                (record) =>
-                    record['Distanza centro'].split(' ')[0] >= 1 && record['Distanza centro'].split(' ')[0] <= 15
-            );
+            return records.filter((record) => {
+                const distance = getDistance(record);
+
+                return  distance >= 500 && distance <= 1000;
+            });
 
         case 3:
-            return records.filter((record) => parseInt(record['Distanza centro'].split(' ')[0]) >= 50);
+            return records.filter((record) => {
+                const distance = getDistance(record);
+
+                return distance > 1000;
+            });
 
         default:
             return records;
@@ -173,8 +194,8 @@ const sortRecordsOnPriorita = (records) => {
 };
 
 exports.getHotelData = catchAsync(async (req, res, next) => {
-    const { checkInDate, checkOutDate, comune, distance, fascio, stelle } = req.body;
-
+    let { checkInDate, checkOutDate, comune, distance, fascio, stelle } = req.body;
+    console.log(comune, distance, stelle, fascio);
     //  fetch data from offerte hotel with the required checkInDate and checkOutDate
 
     // "Valida dal": "2023-08-11",
@@ -269,37 +290,98 @@ exports.getHotelData = catchAsync(async (req, res, next) => {
         }
     });
 
-    // const dataAfterFilteringComune = filterCommune(comune.name, hotelRecords);
+    const comunes = ["Tutta l'isola"];
 
-    // console.log(dataAfterFilteringComune);
-    // console.log(distance);
-    // const dataAfterFilteringDistance = filterDistance(distance, dataAfterFilteringComune);
-    // console.log(dataAfterFilteringDistance);
+    const stelles = ['Tutti'];
 
-    // const dataAfterFilteringFascio = filterFascio(fascio, dataAfterFilteringDistance);
+    if (!hotelRecords.length) {
+        return res.status(200).json({
+            hotels: [],
+            filters: {
+                comunes: [{ name: "Tutta l'isola" }],
+                stelles: [{ name: 'Tutti' }],
+            },
+        });
+    }
 
-    // hotelRecords = filterStelle(stelle.name, dataAfterFilteringFascio);
+    hotelRecords.forEach((hotel) => {
+        const comuneFromHotel = hotel.Comune.trim();
+        const stelleFromHotel = hotel['Stelle struttura'];
+
+        if (!stelles.includes(stelleFromHotel)) stelles.push(stelleFromHotel);
+
+        if (!comunes.includes(comuneFromHotel)) comunes.push(comuneFromHotel);
+    });
+
+    let comunesWithName = comunes.map((comune) => ({ name: comune }));
+    let stellesWithName = stelles.map((stelle) => ({ name: stelle }));
+
+    comunesWithName = comunesWithName.sort((a, b) => (a.name === comune.name ? -1 : 1));
+    stellesWithName = [
+        { name: 'Tutti' },
+        ...stellesWithName.slice(1).sort((a, b) => {
+            let stellevalueA = parseInt(a.name.split(' '));
+            let stellevalueB = parseInt(b.name.split(' '));
+            return stellevalueA - stellevalueB;
+        }),
+    ];
+
+    if (comune.name !== "Tutta l'isola") hotelRecords = filterCommune(comune.name, hotelRecords);
+
+    if (distance.value !== 0) hotelRecords = filterDistance(distance, hotelRecords);
+
+    if (stelle.name !== 'Tutti') hotelRecords = filterStelle(stelle.name, hotelRecords);
+
+    if (fascio.value !== 0) hotelRecords = filterFascio(fascio, hotelRecords);
 
     // Distanza mare, Priorità, Prezzo Minore && lastly Priorità
     const sortedHotelsOnDistanzaMare = hotelRecords.sort((a, b) => {
         let distanceA = a['Distanza mare'];
         let distanceB = b['Distanza mare'];
+        let distanceValueA;
+        let distanceValueB;
 
-        if (!distanceA) return 1;
-        if (!distanceB) return -1;
+        if (!distanceA) distanceValueA = 0;
+        if (!distanceB) distanceValueB = 0;
 
-        distanceA = parseInt(distanceA.split(' ')[0]);
-        distanceB = parseInt(distanceB.split(' ')[0]);
-        return distanceA - distanceB;
+        const distanceASplitted = distanceA.split(' ');
+        const distanceBSplitted = distanceB.split(' ');
+
+        distanceValueA = parseFloat(distanceASplitted[0]);
+        distanceValueB = parseFloat(distanceBSplitted[0]);
+
+        let distanceUnitA = distanceASplitted[1];
+        let distanceUnitB = distanceBSplitted[1];
+
+        if (isNaN(distanceValueA)) distanceValueA = 0;
+        if (isNaN(distanceValueB)) distanceValueB = 0;
+
+        if (distanceUnitA !== 'mt' && distanceUnitA !== 'mt.') distanceValueA = distanceValueA * 1000;
+        if (distanceUnitB !== 'mt' && distanceUnitB !== 'mt.') distanceValueB = distanceValueB * 1000;
+        return distanceValueA - distanceValueB;
     });
 
-    if (!sortedHotelsOnDistanzaMare.length) return res.status(200).json({ hotels: [] });
+    if (!sortedHotelsOnDistanzaMare.length)
+        return res.status(200).json({
+            hotels: [],
+            filters: {
+                comunes: comunesWithName,
+                stelles: stellesWithName,
+            },
+        });
 
     let hotelWithLowestDistanzaMare = { ...sortedHotelsOnDistanzaMare[0], ticker: 'Più vicino al mare' };
 
     const sortedHotelsOnPriorita = sortRecordsOnPriorita(sortedHotelsOnDistanzaMare.slice(1));
 
-    if (!sortedHotelsOnPriorita.length) return res.status(200).json({ hotels: [hotelWithLowestDistanzaMare] });
+    if (!sortedHotelsOnPriorita.length)
+        return res.status(200).json({
+            hotels: [hotelWithLowestDistanzaMare],
+            filters: {
+                comunes: comunesWithName,
+                stelles: stellesWithName,
+            },
+        });
 
     let hotelWithLowestPriorita = { ...sortedHotelsOnPriorita[0], ticker: 'Più Venduto' };
 
@@ -313,13 +395,23 @@ exports.getHotelData = catchAsync(async (req, res, next) => {
     });
 
     if (!sortedHotelsOnPrezzo.length)
-        return res.status(200).json({ hotels: [hotelWithLowestDistanzaMare, hotelWithLowestPriorita] });
+        return res.status(200).json({
+            hotels: [hotelWithLowestDistanzaMare, hotelWithLowestPriorita],
+            filters: {
+                comunes: comunesWithName,
+                stelles: stellesWithName,
+            },
+        });
     let hotelWithLowestPrezzo = { ...sortedHotelsOnPrezzo[0], ticker: 'Prezzo più basso' };
 
     let remainingRecords = sortRecordsOnPriorita(sortedHotelsOnPrezzo.slice(1));
 
     return res.status(200).json({
         hotels: [hotelWithLowestDistanzaMare, hotelWithLowestPriorita, hotelWithLowestPrezzo, ...remainingRecords],
+        filters: {
+            comunes: comunesWithName,
+            stelles: stellesWithName,
+        },
     });
     //  filter hotels with given other filters
 

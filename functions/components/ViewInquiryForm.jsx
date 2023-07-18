@@ -2,8 +2,8 @@ import React, { createRef, useEffect, useState } from 'react';
 import { Plus2, Send } from './Icon';
 import Input from './Input';
 import Room from './Room';
-import { Toaster, toast } from 'react-hot-toast';
-import axios from 'axios';
+
+import 'react-datepicker/dist/react-datepicker.css';
 
 import loading from '../public/dualLoading.gif';
 
@@ -18,7 +18,6 @@ const formatDate = (ogDate) => {
     // Format the date as YYYY-MM-DD
     let formattedDate = `${year}-${month}-${day}`;
 
-    // Set the value of the HTML input element
     return formattedDate;
 };
 
@@ -59,41 +58,33 @@ const checkDateValidity = (offer, checkInDate, checkOutDate) => {
     return false;
 };
 
-const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInDate, checkOutDate }) => {
-    const [value, setvalue] = useState('');
-
+const ViewInquiryForm = ({
+    offer,
+    Hotel,
+    NomeModulo,
+    totalPriceForUser,
+    checkInDate,
+    checkOutDate,
+    setUserData,
+    userData,
+    sending,
+    setvalue,
+    value,
+    handleSubmit,
+    buttonDisabled,
+    handleUpdateRooms,
+}) => {
     const [dateValid, setDateValid] = useState(checkDateValidity(offer, checkInDate, checkOutDate));
-    const [buttonDisabled, setButtonDisabled] = useState(false);
-
-    const [userData, setUserData] = useState({
-        Nome: '',
-        Cognome: '',
-        Email: '',
-        Phone: '',
-        postedDate: new Date().toDateString(),
-        departure: '',
-
-        arrival: '',
-        packageBoard: 'Mezza pensione"',
-        rooms: [{ noofAdults: 2, noofChildren: 0, ages: [] }],
-        Citta: '',
-        note: '',
-        NomeModulo,
-        Hotel,
-
-        numeroBagagliAlis: '1',
-        ferry: 'traghetto con auto fino 4 mt. da Pozzuoli A/R € 75 - passeggeri € 22',
-        trasporto: 'Bus',
-        numeroBagagliViaggio: '',
-
-        pricePerPerson: '',
-        selectedCitta: '',
-    });
 
     const [maxDepartureDate, setMaxDepatureDate] = useState('');
     const [minDepartureDate, setMinDepartureDate] = useState('');
     const [minArrivalDate, setMinArrivalDate] = useState('');
     const [maxArrivalDate, setMaxArrivalDate] = useState('');
+
+    const [arrival, setArrival] = useState('');
+    const [departure, setDeparture] = useState('');
+
+    const [clicked, setClicked] = useState(false);
 
     function calculateInitialMinAndMaxDates(offer) {
         const minNights = parseInt(offer['minimo notti']);
@@ -110,6 +101,10 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
 
         setMaxDepatureDate(formatDate(maximumDeparture));
         setMinDepartureDate(formatDate(minimumDeparture));
+        if (departureRef.current) {
+            departureRef.current.min = formatDate(minimumDeparture);
+            departureRef.current.max = formatDate(maximumDeparture);
+        }
 
         // for arrival
 
@@ -118,9 +113,12 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
 
         const maximumArrival = new Date(offer['Valida al']);
 
+        if (arrivalRef.current) arrivalRef.current.max = formatDate(maximumArrival);
+
         setMaxArrivalDate(formatDate(maximumArrival));
 
         setMinArrivalDate(formatDate(minimumArrival));
+       if(arrivalRef.current) arrivalRef.current.min = formatDate(minimumArrival);
     }
 
     useEffect(() => {
@@ -140,14 +138,16 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
         setReadOnly(equal);
         // const maxNights = parseInt(offer['massimo notti']);
 
+        setArrival(equal ? formatDate(offer['Valida al']) : dateValid ? formatDate(checkOutDate) : '');
+        setDeparture(equal ? formatDate(offer['Valida dal']) : dateValid ? formatDate(checkInDate) : '');
         setUserData({
             ...userData,
-            departure: equal ? formatDate(new Date(offer['Valida dal'])) : dateValid ? formatDate(checkInDate) : '',
+            // departure: equal ? formatDate(offer['Valida dal']) : dateValid ? formatDate(checkInDate) : '',
 
-            arrival: equal ? formatDate(new Date(offer['Valida al'])) : dateValid ? formatDate(checkOutDate) : '',
-            NomeModulo,
-            Hotel,
-            pricePerPerson: totalPriceForUser,
+            // arrival: equal ? formatDate(offer['Valida al']) : dateValid ? formatDate(checkOutDate) : '',
+            // NomeModulo,
+            // Hotel,
+            // pricePerPerson: totalPriceForUser,
         });
     }, [offer, checkInDate, checkOutDate, Hotel, NomeModulo, totalPriceForUser, dateValid]);
 
@@ -158,7 +158,11 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
         const minArrivalDateCalc = formatDate(
             departureDateFromForm.setDate(departureDateFromForm.getDate() + minNights)
         );
+
+        // arrivalRef?.current?.min(minArrivalDate)
+
         setMinArrivalDate(minArrivalDateCalc);
+        if (arrivalRef.current) arrivalRef.current.min = minArrivalDateCalc;
     };
 
     const handleArrivalChange = (e) => {
@@ -168,132 +172,16 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
         const maxDepartureDateCalc = formatDate(arrivalDateFromForm.setDate(arrivalDateFromForm.getDate() - minNights));
 
         setMaxDepatureDate(maxDepartureDateCalc);
+        departureRef.current.max = maxDepartureDateCalc;
     };
 
     const handleChange = (e) => {
         setUserData({ ...userData, [e.target.name]: e.target.value });
     };
 
-    const [sending, setSending] = useState(false);
-
     const departureRef = createRef(null);
 
     const arrivalRef = createRef(null);
-
-    const handeSubmit = (e) => {
-        e.preventDefault();
-        if (buttonDisabled) {
-            toast.error('Wait for a while');
-            return;
-        }
-        const dataToBePosted = { ...userData };
-        if (!userData.Nome) {
-            toast.error('Please enter name');
-            return;
-        }
-        if (!userData.Cognome) {
-            toast.error('please enter cognome');
-            return;
-        }
-        if (!userData.Email) {
-            toast.error('please enter email');
-            return;
-        }
-        if (!userData.Phone) {
-            toast.error('please enter phone');
-            return;
-        }
-        if (!userData.arrival) {
-            toast.error('please select arrival date');
-            return;
-        }
-        if (!userData.departure) {
-            toast.error('please select departure date');
-            return;
-        }
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const phoneRegex = /^(\+\d{1,3}\s?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/;
-
-        if (!emailRegex.test(userData.Email)) {
-            toast.error('Please enter valid email.');
-            return;
-        }
-        if (!phoneRegex.test(userData.Phone)) {
-            toast.error('Please enter valid phone number.');
-            return;
-        }
-        switch (value) {
-            case 'aliscafo':
-                if (!userData.numeroBagagliAlis) {
-                    toast.error('Please enter Numero di Bagagli');
-                    return;
-                } else dataToBePosted.Citta = `Aliscafo + Transfer | ${userData.numeroBagagliAlis}`;
-                break;
-            case 'ferry':
-                if (!userData.ferry) {
-                    toast.error('Please enter Dimensione Auto');
-                    return;
-                } else dataToBePosted.Citta = `Traghetto + Transfer | ${userData.ferry}`;
-                break;
-
-            case 'viaggio':
-                if (!userData.trasporto) {
-                    toast.error('Please enter Tipo di trasporto preferito');
-                    return;
-                }
-                if (!userData.numeroBagagliViaggio) {
-                    toast.error('Please the Numero di Bagagli');
-
-                    return;
-                }
-
-                dataToBePosted.Citta = `${userData.numeroBagagliViaggio} con ${userData.trasporto}`;
-
-                break;
-
-            default:
-                dataToBePosted.Citta = '';
-        }
-
-        setSending(true);
-        axios
-            .post('/api/enquiry', { ...dataToBePosted })
-            .then((res) => {
-                toast.success('Success');
-                setSending(false);
-                setButtonDisabled(true);
-                setTimeout(() => {
-                    setButtonDisabled(false);
-                }, 10000);
-                // setUserData({
-                //     Nome: '',
-                //     Cognome: '',
-                //     Email: '',
-                //     Phone: '',
-                //     postedDate: new Date().toDateString(),
-                //     arrival: formatDate(checkOutDate),
-                //     departure: formatDate(checkInDate),
-                //     packageBoard: 'Half Board',
-                //     rooms: [{ noofAdults: 2, noofChildren: 0, ages: [] }],
-                //     Citta: '',
-                //     note: '',
-                //     NomeModulo,
-                //     Hotel,
-                //     numeroBagagliAlis: '1 bagaglio',
-                //     ferry: '',
-                //     trasporto: 'Bus da 85€',
-                //     numeroBagagliViaggio: 'Milano',
-
-                //     pricePerPerson: totalPriceForUser,
-                //     selectedCitta: '',
-                // });
-            })
-            .catch((err) => {
-                setSending(false);
-                console.log(err);
-                toast.error(err.response?.data.message || 'Internal server error');
-            });
-    };
 
     const handleAddRoom = () => {
         setUserData({ ...userData, rooms: [...userData.rooms, { noofAdults: 2, noofChildren: 0, ages: [] }] });
@@ -303,14 +191,6 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
         const updatedRooms = userData.rooms.filter((room, i) => i !== index);
 
         setUserData(() => ({ ...userData, rooms: updatedRooms }));
-    };
-
-    const handleUpdateRooms = (room, i) => {
-        const updatedRooms = userData.rooms.map((r, index) => {
-            if (i === index) return room;
-            return r;
-        });
-        setUserData({ ...userData, rooms: updatedRooms });
     };
 
     return (
@@ -369,27 +249,34 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
                                 <div className="">
                                     <Input
                                         handleChange={(e) => {
-                                            handleChange(e);
+                                            setDeparture(e.target.value);
                                             handleDepartureChange(e);
                                         }}
-                                        value={userData.departure}
+                                        value={departure}
                                         name="departure"
-                                        min={minDepartureDate}
-                                        max={maxDepartureDate}
+                                        // min={minDepartureDate}
+                                        // max={maxDepartureDate}
                                         label="Data Check In"
                                         type="date"
+                                        id="departureDatePicker"
                                         ref={departureRef}
                                         readOnly={readOnly}
-                                        placeholder="Seleziona la data di partenza"
+                                        placeholder="Seleziona la data"
+                                        placeholderMin="Seleziona la data di partenza &nbsp; &nbsp;&nbsp;&nbsp;"
+                                        hasValue={departure && departure.length ? true : false}
                                         onKeyDown={(e) => {
                                             e.preventDefault();
+                                        }}
+                                        onClick={(e) => {
+                                            try {
+                                                departureRef?.current?.showPicker();
+                                            } catch (err) {}
                                         }}
                                     />
                                 </div>
 
-                                {/* {!userData.departure && ( */}
                                 <div className="absolute top-0 left-0 right-sm-0 w-100 px-2">
-                                    <Input
+                                    {/* <Input
                                         placeholder="Seleziona la data di partenza"
                                         label="Data Check In"
                                         value={userData.departure}
@@ -397,62 +284,68 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
                                             // textAlign: 'center',
                                             paddingLeft: '7%',
                                         }}
+                                        readOnly={true}
                                         onClick={(e) => {
                                             try {
-                                                departureRef?.current?.showPicker();
-                                                // departureRef.current.style.opacity = 1;
+                                                if (!readOnly) departureRef?.current?.focus();
                                             } catch (err) {
                                                 console.log(err);
                                             }
                                         }}
-                                    />
+                                    /> */}
                                 </div>
-                                {/* )} */}
                             </div>
                             <div className="col-sm-6 col-md-3 col-lg-2 relative">
                                 <div className="">
                                     <Input
                                         handleChange={(e) => {
-                                            handleChange(e);
+                                            setArrival(e.target.value);
                                             handleArrivalChange(e);
                                         }}
-                                        value={userData.arrival}
+                                        value={arrival}
                                         name="arrival"
-                                        min={minArrivalDate}
-                                        max={maxArrivalDate}
+                                        id="arrivalDatePicker"
+                                        // min={minArrivalDate}
+                                        // max={maxArrivalDate}
                                         required
                                         label="Data Check Out"
                                         ref={arrivalRef}
-                                        placeholder="Seleziona la data di arrivo"
+                                        placeholder="Seleziona la data"
+                                        placeholderMin="Seleziona la data di arrivo &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
                                         type="date"
                                         readOnly={readOnly}
+                                        hasValue={arrival && arrival.length ? true : false}
+                                        onClick={(e) => {
+                                            try {
+                                                arrivalRef?.current?.showPicker();
+                                            } catch (err) {}
+                                        }}
                                         onKeyDown={(e) => {
                                             e.preventDefault();
                                         }}
                                     />
                                 </div>
 
-                                {/* {!userData.arrival && ( */}
                                 <div className="absolute top-0 left-0 w-100 px-2">
-                                    <Input
+                                    {/* <Input
                                         placeholder="Seleziona la data di arrivo"
                                         label="Data Check Out"
                                         value={userData.arrival}
+                                        readOnly={true}
                                         style={{
                                             // textAlign: 'center',
                                             paddingLeft: '7%',
                                         }}
                                         onClick={(e) => {
                                             try {
-                                                arrivalRef?.current?.showPicker();
+                                                if (!readOnly) arrivalRef?.current?.showPicker();
                                                 // arrivalRef.current.style.opacity = 1;
                                             } catch (err) {
                                                 console.log(err);
                                             }
                                         }}
-                                    />
+                                    /> */}
                                 </div>
-                                {/* )} */}
                             </div>
                             <div className="col-sm-6 col-md-3 col-lg-2">
                                 <Input
@@ -469,7 +362,7 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
                         {/* <Room room={userData.rooms[0]} id={0} handleUpdateRoom={handleUpdateRooms} /> */}
 
                         {userData.rooms.map((item, i) => (
-                            <Room room={item} id={i} removeRoom={removeRoom} handleUpdateRoom={handleUpdateRooms} />
+                            <Room roomData={item} id={i} removeRoom={removeRoom} handleUpdateRoom={handleUpdateRooms} />
                         ))}
 
                         <div className="row g-3">
@@ -660,7 +553,19 @@ const ViewInquiryForm = ({ offer, Hotel, NomeModulo, totalPriceForUser, checkInD
                             </button>
                         </div>
                     ) : (
-                        <div onClick={handeSubmit} className="pt-4">
+                        <div
+                            onClick={(e) => {
+                                e.preventDefault();
+                                if (!clicked) {
+                                    setClicked(true);
+                                    setTimeout(() => {
+                                        handleSubmit(arrival, departure, NomeModulo, Hotel, totalPriceForUser);
+                                        setClicked(false);
+                                    }, 1000);
+                                }
+                            }}
+                            className="pt-4"
+                        >
                             <button className="cmn-btn w-100" type="button">
                                 {sending ? (
                                     <img style={{ width: '25px' }} src={loading.src} alt="loading" />

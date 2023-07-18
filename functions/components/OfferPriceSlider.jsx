@@ -9,7 +9,23 @@ import { FaqsItems } from './FaqsItems';
 import { AngleDown, AngleUp, Bus, Car, CheckIcon, NextIcon, PrevIcon, Ship, Train } from './Icon';
 import ViewInquiryForm from './ViewInquiryForm';
 import SelectDropDown from './SelectDropDown';
-const OfferPriceSlider = ({ offers, serial, setOfferButtonIn, offerButtonIn, hotel, checkInDate, checkOutDate }) => {
+const OfferPriceSlider = ({
+    offers,
+    serial,
+    setOfferButtonIn,
+    offerButtonIn,
+    hotel,
+    checkInDate,
+    checkOutDate,
+    setUserData,
+    userData,
+    sending,
+    setvalue,
+    value,
+    handleSubmit,
+    buttonDisabled,
+    handleUpdateRooms,
+}) => {
     const [index, setIndex] = useState(0);
     const [innerCollapse, setInnerCollapse] = useState(false);
 
@@ -268,12 +284,20 @@ const OfferPriceSlider = ({ offers, serial, setOfferButtonIn, offerButtonIn, hot
             <div className="inquiry-form pt-32 collapse" id={`package-inner-${serial}`}>
                 <div className="scroll-pos" ref={scrollRef}></div>
                 <ViewInquiryForm
+                    setUserData={setUserData}
+                    userData={userData}
+                    sending={sending}
+                    setvalue={setvalue}
+                    value={value}
+                    handleSubmit={handleSubmit}
                     checkInDate={checkInDate}
                     checkOutDate={checkOutDate}
                     offer={activeData}
                     Hotel={hotel['Nome Hotel']}
                     NomeModulo={hotel['NomeModulo']}
                     totalPriceForUser={activeData.selectItems[activeData.selectedOption].price.toFixed()}
+                    buttonDisabled={buttonDisabled}
+                    handleUpdateRooms={handleUpdateRooms}
                 />
             </div>
         </>

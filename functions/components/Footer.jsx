@@ -5,15 +5,14 @@ import { Calendar, Dollar, FiveStar, Location, SearchIcon, Star, Stelle } from '
 
 import Calender from './calender/Calender';
 
-const Footer = ({ initialConfigData, config, setConfig }) => {
+const Footer = ({ initialConfigData, config, setConfig, comunes }) => {
     const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
     const handleKeyboardEvent = (event) => {
         setIsKeyboardOpen(event.detail.isKeyboardOpen);
     };
 
-    const [footerConfig, setFooterConfig] = useState(config);
+    const [footerConfig, setFooterConfig] = useState({ ...config, comune: config.comune || comunes[0] });
     const handleFooterConfig = (name, value) => {
-        console.log(name, value);
         setFooterConfig({ ...footerConfig, [name]: value });
     };
 
@@ -50,7 +49,7 @@ const Footer = ({ initialConfigData, config, setConfig }) => {
         month: 'long',
         day: 'numeric',
     };
-    const { comunes, stelles, distances, fascio } = initialConfigData;
+    const { stelles, distances, fascio } = initialConfigData;
 
     return (
         <footer style={{ position: isKeyboardOpen ? 'relative' : 'sticky' }}>
@@ -60,8 +59,8 @@ const Footer = ({ initialConfigData, config, setConfig }) => {
         onScreenResize={handleKeyboardEvent}
       /> */}
             <div className="container-fluid">
-                <div style={{zIndex:-1}}  className="footer-wrapper d-none d-sm-flex">
-                    <DropdownGroup
+                <div style={{ zIndex: -1 }} className="footer-wrapper d-none d-sm-flex align-items-center justify-center">
+                    {/* <DropdownGroup
                         handleChange={(value) => handleFooterConfig('comune', value)}
                         value={footerConfig.comune}
                         label="Comune"
@@ -96,7 +95,7 @@ const Footer = ({ initialConfigData, config, setConfig }) => {
                         value={footerConfig.stelle}
                         data={stelles}
                         position="top"
-                    />
+                    /> */}
                     <div className="custom-dropdown">
                         <label htmlFor="checkin">Check In</label>
                         <input
@@ -111,7 +110,7 @@ const Footer = ({ initialConfigData, config, setConfig }) => {
                             <Calendar />
                         </span>
                     </div>
-                    <div className="custom-dropdown">
+                    <div className="custom-dropdown" style={{marginLeft:"5rem"}}>
                         <label htmlFor="checkin">Check Out</label>
                         <input
                             type="text"
@@ -126,9 +125,9 @@ const Footer = ({ initialConfigData, config, setConfig }) => {
                         </span>
                     </div>
 
-                    <button onClick={handleSubmit} type="submit" className="cmn-btn d-none d-sm-flex">
+                    {/* <button onClick={handleSubmit} type="submit" className="cmn-btn d-none d-sm-flex">
                         <SearchIcon /> Find a Best Hotel
-                    </button>
+                    </button> */}
                 </div>
                 <div className="footer-wrapper d-sm-none custom-dropdown-wrp">
                     <div className="custom-dropdown">

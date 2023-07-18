@@ -27,7 +27,21 @@ import {
 import OfferPriceSlider from './OfferPriceSlider';
 import axios from 'axios';
 const OfferItem = (props) => {
-    const { offer, index, hotel, checkInDate, checkOutDate } = props;
+    const {
+        offer,
+        index,
+        hotel,
+        checkInDate,
+        checkOutDate,
+        setUserData,
+        userData,
+        sending,
+        setvalue,
+        value,
+        handleSubmit,
+        buttonDisabled,
+        handleUpdateRooms,
+    } = props;
 
     const [loadingOffers, setLoadingOffers] = useState(false);
 
@@ -164,7 +178,7 @@ const OfferItem = (props) => {
                                 </a>
                             </h5>
                             <span className="location">
-                                <LocationThree /> {hotel['Località']}
+                                <LocationThree /> {hotel['Comune']}
                             </span>
                             <div className="d-flex align-items-center review">
                                 <img src={review.src} alt="" />
@@ -215,7 +229,7 @@ const OfferItem = (props) => {
                             >
                                 {offerOpen ? (
                                     <span className="text-title">
-                                        Chiudi Offerta <AngleUp />
+                                        Close Offer <AngleUp />
                                     </span>
                                 ) : (
                                     <span>
@@ -225,8 +239,7 @@ const OfferItem = (props) => {
                             </button>
                             <button type="button" className="outline-0 bg-transparent whatsapp-btn">
                                 <a
-                                    href="https://api.whatsapp.com/send/?phone=3908119758555&text=Richiesta%20Informazioni%20per%20L%27hotel%20&type=phone_number&app_absent=0
-"
+                                    href={`https://api.whatsapp.com/send/?phone=3908119758555&text=Richiesta Informazioni per L'hotel ${hotel['Nome Hotel']}&type=phone_number&app_absent=0`}
                                     target="_blank"
                                     rel="noreferrer"
                                 >
@@ -253,6 +266,12 @@ const OfferItem = (props) => {
                     <OffersLoading />
                 ) : offers && offers.length ? (
                     <OfferPriceSlider
+                        setUserData={setUserData}
+                        userData={userData}
+                        sending={sending}
+                        setvalue={setvalue}
+                        value={value}
+                        handleSubmit={handleSubmit}
                         offers={offers}
                         hotel={hotel}
                         checkInDate={checkInDate}
@@ -260,6 +279,8 @@ const OfferItem = (props) => {
                         setOfferButtonIn={setOfferButtonIn}
                         offerButtonIn={offerButtonIn}
                         serial={index}
+                        buttonDisabled={buttonDisabled}
+                        handleUpdateRooms={handleUpdateRooms}
                     />
                 ) : (
                     <>

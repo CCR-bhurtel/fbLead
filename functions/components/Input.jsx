@@ -1,8 +1,8 @@
 import React, { createRef, useRef, useState } from 'react';
 
 const Input = React.forwardRef((props, ref) => {
-    const { required, type, value, handleChange, label, select, options, name, optional, ...rest } = props;
-  
+    const { required, type, value, handleChange, label, select, options, name, optional, hasValue, ...rest } = props;
+
     return (
         <div className="position-relative">
             <label className="__form-label">
@@ -16,7 +16,7 @@ const Input = React.forwardRef((props, ref) => {
             {!select ? (
                 <input
                     type={type}
-                    className="form-control __form-control"
+                    className={`${value && 'has-value'} form-control __form-control`}
                     value={value}
                     name={name}
                     onChange={handleChange}

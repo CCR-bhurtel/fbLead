@@ -17,18 +17,18 @@ const formatDate = (dateString, type) => {
     dateBeforeThreeDays.setDate(dateBeforeThreeDays.getDate() - 3);
     dateAfterThreeDays.setDate(dateAfterThreeDays.getDate() + 3);
 
-    if (type === 'checkin') {
-        if (date < todaySDate) {
-            date = todaySDate;
-        }
-        if (dateBeforeThreeDays > todaySDate) {
-            date = dateBeforeThreeDays;
-        }
-    } else if (type === 'checkout') {
-        if (dateAfterTwoDays < todaySDate) {
-            date = dateAfterOneWeekFromCurrentDate;
-        }
-    }
+    // if (type === 'checkin') {
+    //     if (date < todaySDate) {
+    //         date = todaySDate;
+    //     }
+    //     if (dateBeforeThreeDays > todaySDate) {
+    //         date = dateBeforeThreeDays;
+    //     }
+    // } else if (type === 'checkout') {
+    //     if (dateAfterTwoDays < todaySDate) {
+    //         date = dateAfterOneWeekFromCurrentDate;
+    //     }
+    // }
     return date;
 };
 

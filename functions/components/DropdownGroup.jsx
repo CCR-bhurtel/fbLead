@@ -13,17 +13,22 @@ const DropdownGroup = ({
     name,
 
     value,
+    zIndex,
 }) => {
-    const indexI = data.findIndex(function (obj) {
-        return obj.name === value.name;
-    });
+    const indexI = data.length
+        ? data.findIndex(function (obj) {
+              return obj.name === value.name;
+          })
+        : null;
     const [index, setIndex] = useState(indexI);
     const [open, setOpen] = useState(false);
-    const activeIndex = data[index];
+    let activeIndex = data[index];
+
+    if (!data.length || !activeIndex) activeIndex = { name: "Tutta l'isola" };
 
     return (
         <>
-            <div className="__dropdown-item">
+            <div style={{ zIndex: zIndex || 0 }} className="__dropdown-item">
                 {label && (
                     <label
                         className={`form-label ${smText ? 'no-wrap-sm' : ''} ${

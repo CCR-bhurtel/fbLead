@@ -14,10 +14,15 @@ import getDateString from '../utils/getDateString';
 function Hotel() {
     const [loadingInitialData, setLoadingInitialData] = useState(false);
     const [loadingHotels, setloadingHotels] = useState(false);
+    const [initialDataLoaded, setInitialDataLoaded] = useState(false);
     const [initialConfigData, setInitialConfigData] = useState(null);
 
     const [config, setConfig] = useState(null);
     const [hotels, setHotels] = useState([]);
+
+    const [comunes, setComunes] = useState([]);
+
+    const [stelles, setStelles] = useState([]);
 
     const router = useRouter();
 
@@ -28,6 +33,10 @@ function Hotel() {
             const response = await axios.get('/api/data/initialhoteldata');
 
             response.data && setInitialConfigData((prevData) => response.data);
+            setInitialDataLoaded(true);
+
+            response.data && setComunes(response.data.comunes);
+            response.data && setStelles(response.data.stelles);
         } catch (err) {
             setLoadingInitialData(false);
             toast.error('Error loading initial props');
@@ -42,7 +51,7 @@ function Hotel() {
             fascio: initialConfigData.fascio[0],
             distance: initialConfigData.distances[0],
             comune: initialConfigData.comunes[0],
-            stelle: initialConfigData.stelles[2],
+            stelle: initialConfigData.stelles[0],
         };
         if (checkInDate && checkOutDate) {
             config.checkInDate = formatDate(checkInDate, 'checkin');
@@ -63,6 +72,14 @@ function Hotel() {
                 ...config,
             });
             setHotels(hotels.data.hotels);
+
+            // setConfig({ ...config, comune: hotels.data.filters.selectedComune });
+            // setInitialConfigData({ ...initialConfigData });
+            setComunes(hotels.data.filters.comunes);
+
+            setStelles(hotels.data.filters.stelles);
+            // selectedComune,
+            // comunes: comunesWithName,
         } catch (err) {
             setHotels([]);
             toast.error('Error loading hotels');
@@ -76,7 +93,9 @@ function Hotel() {
     };
 
     useEffect(() => {
-        loadInitialConfig();
+        if (!initialDataLoaded) {
+            loadInitialConfig();
+        }
     }, []);
 
     useEffect(() => {
@@ -113,11 +132,27 @@ function Hotel() {
                 <>
                     <Banner
                         initialConfigData={initialConfigData}
+                        comunes={comunes}
+                        stelles={stelles}
                         config={config}
                         handleConfigChange={handleConfigChange}
                     />
-                    <MainSection hotels={hotels} checkInDate={config.checkInDate} checkOutDate={config.checkOutDate} />
-                    <Footer initialConfigData={initialConfigData} config={config} setConfig={setConfig} />
+                    {hotels.length ? (
+                        <MainSection
+                            hotels={hotels}
+                            checkInDate={config.checkInDate}
+                            checkOutDate={config.checkOutDate}
+                        />
+                    ) : (
+                        <h1 style={{ minHeight: '10rem', padding: '2rem' }}>Nessun hotel trovato</h1>
+                    )}
+                    <Footer
+                        comunes={comunes}
+                        initialConfigData={initialConfigData}
+                        config={config}
+                        stelles={stelles}
+                        setConfig={setConfig}
+                    />
                 </>
             )}
         </>

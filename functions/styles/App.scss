@@ -80,7 +80,7 @@
 
 body {
     background: var(--body);
-    // font-family: var(--body-fonts);
+    font-family: var(--heading-fonts);
     color: var(--text);
     font-size: 16px;
     line-height: 27.5px;
@@ -308,6 +308,7 @@ header {
         }
     }
     .menu {
+        padding-left: 0 !important;
         display: flex;
         align-items: center;
         column-gap: 32px;
@@ -570,6 +571,7 @@ header {
         display: flex;
         justify-content: space-between;
         flex-direction: column;
+        position: relative;
     }
     @include breakpoint(max-md) {
         padding: 12px 16px;
@@ -675,6 +677,39 @@ footer {
         background: transparent;
     }
 }
+
+input[type='date']:not(.has-value):before {
+    content: attr(placeholder);
+    white-space: nowrap;
+    @include breakpoint(max-sm) {
+        content: attr(placeholderMin);
+    }
+}
+
+input[type='date']:not(.has-value) {
+    white-space: nowrap;
+    text-align: right;
+    color: lightgrey;
+
+    // opacity:0;
+    @include breakpoint(max-sm) {
+        padding-top: 1.5rem;
+    }
+}
+
+// input[type='date']:not(.has-value):before {
+//     color: lightgrey;
+
+//     content: attr(placeholder) !important;
+//     margin-right: 0.5em;
+// }
+// input[type='date']:not(.has-value):after {
+//     content: '';
+// }
+// input[type='date']:focus:before {
+//     content: '' !important;
+// }
+
 .form-label {
     color: var(--white);
     font-weight: 500;
@@ -1504,7 +1539,7 @@ $color-border: #f6941c;
 $roboto: 'Chillax', sans-serif;
 
 body {
-    font-family: $roboto;
+    font-family: $roboto !important;
 
     p {
         margin: 0;

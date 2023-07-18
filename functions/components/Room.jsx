@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Input from './Input';
 
-function Room({ room, id, removeRoom, handleUpdateRoom }) {
-    const [roomData, setRoomData] = useState({ noofAdults: 2, noofChildren: 0, ages: [] });
-
+function Room({ roomData, id, removeRoom, handleUpdateRoom }) {
     const [options, setOptions] = useState({});
 
     useEffect(() => {
@@ -15,7 +13,6 @@ function Room({ room, id, removeRoom, handleUpdateRoom }) {
             chilren: Array.from({ length: 4 - roomData.noofAdults + 1 }, (_, index) => ({ val: index, text: index })),
             ages: Array.from({ length: 17 }, (_, index) => ({ val: index + 1, text: index + 1 })),
         });
-        handleUpdateRoom(roomData, id);
     }, [roomData]);
 
     const handleAgeChange = (i, value) => {
@@ -23,11 +20,13 @@ function Room({ room, id, removeRoom, handleUpdateRoom }) {
             if (index === i) return value;
             else return age;
         });
-        setRoomData(() => ({ ...roomData, ages: changedAges }));
+        // setRoomData(() => ({ ...roomData, ages: changedAges }));
+        handleUpdateRoom({ ...roomData, ages: changedAges }, id);
     };
 
     const handleChange = (e) => {
-        setRoomData({ ...roomData, [e.target.name]: e.target.value });
+        // setRoomData({ ...roomData, [e.target.name]: e.target.value });
+        handleUpdateRoom({ ...roomData, [e.target.name]: e.target.value }, id);
     };
 
     const handleNoofChildren = (value) => {
@@ -38,7 +37,7 @@ function Room({ room, id, removeRoom, handleUpdateRoom }) {
             ages = ages.concat(Array(dataDiff).fill(12));
         }
 
-        setRoomData({ ...roomData, ages, noofChildren: value });
+        handleUpdateRoom({ ...roomData, ages, noofChildren: value }, id);
     };
     return (
         <div>
@@ -86,7 +85,7 @@ function Room({ room, id, removeRoom, handleUpdateRoom }) {
                             }}
                             select
                             options={options.ages}
-                            label={`Age(Child ${i + 1}) Età ${i + 1}`}
+                            label={`Età ${i + 1}`}
                             placeholder="DD/MM/YY"
                         />
                     </div>
