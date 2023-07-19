@@ -1,11 +1,10 @@
-import React, { createRef, useEffect, useState } from 'react';
+import React, { createRef, useEffect, useRef, useState } from 'react';
 import { Plus2, Send } from './Icon';
 import Input from './Input';
 import Room from './Room';
 
-import 'react-datepicker/dist/react-datepicker.css';
-
 import loading from '../public/dualLoading.gif';
+import CustomDatePicker from './calender/CalenderEnquiry';
 
 const formatDate = (ogDate) => {
     let date = new Date(ogDate);
@@ -58,22 +57,30 @@ const checkDateValidity = (offer, checkInDate, checkOutDate) => {
     return false;
 };
 
-const ViewInquiryForm = ({
-    offer,
-    Hotel,
-    NomeModulo,
-    totalPriceForUser,
-    checkInDate,
-    checkOutDate,
-    setUserData,
-    userData,
-    sending,
-    setvalue,
-    value,
-    handleSubmit,
-    buttonDisabled,
-    handleUpdateRooms,
-}) => {
+const ViewInquiryForm = (
+    {
+        offer,
+        Hotel,
+        NomeModulo,
+        totalPriceForUser,
+        checkInDate,
+        checkOutDate,
+        setUserData,
+        userData,
+        sending,
+        setvalue,
+        value,
+        handleSubmit,
+        buttonDisabled,
+        handleUpdateRooms,
+        setDatePickerOpen,
+        selectItems,
+        selectedPackage,
+        setSelectedPackage,
+        handleOfferClose,
+    },
+    ref
+) => {
     const [dateValid, setDateValid] = useState(checkDateValidity(offer, checkInDate, checkOutDate));
 
     const [maxDepartureDate, setMaxDepatureDate] = useState('');
@@ -99,12 +106,9 @@ const ViewInquiryForm = ({
         const maximumDeparture = checkOutDateFromRecord;
         maximumDeparture.setDate(maximumDeparture.getDate() - minNights);
 
-        setMaxDepatureDate(formatDate(maximumDeparture));
-        setMinDepartureDate(formatDate(minimumDeparture));
-        if (departureRef.current) {
-            departureRef.current.min = formatDate(minimumDeparture);
-            departureRef.current.max = formatDate(maximumDeparture);
-        }
+        setMaxDepatureDate(maximumDeparture);
+
+        setMinDepartureDate(new Date(offer['Valida dal']));
 
         // for arrival
 
@@ -113,12 +117,9 @@ const ViewInquiryForm = ({
 
         const maximumArrival = new Date(offer['Valida al']);
 
-        if (arrivalRef.current) arrivalRef.current.max = formatDate(maximumArrival);
+        setMaxArrivalDate(maximumArrival);
 
-        setMaxArrivalDate(formatDate(maximumArrival));
-
-        setMinArrivalDate(formatDate(minimumArrival));
-       if(arrivalRef.current) arrivalRef.current.min = formatDate(minimumArrival);
+        setMinArrivalDate(minimumArrival);
     }
 
     useEffect(() => {
@@ -138,41 +139,27 @@ const ViewInquiryForm = ({
         setReadOnly(equal);
         // const maxNights = parseInt(offer['massimo notti']);
 
-        setArrival(equal ? formatDate(offer['Valida al']) : dateValid ? formatDate(checkOutDate) : '');
-        setDeparture(equal ? formatDate(offer['Valida dal']) : dateValid ? formatDate(checkInDate) : '');
-        setUserData({
-            ...userData,
-            // departure: equal ? formatDate(offer['Valida dal']) : dateValid ? formatDate(checkInDate) : '',
-
-            // arrival: equal ? formatDate(offer['Valida al']) : dateValid ? formatDate(checkOutDate) : '',
-            // NomeModulo,
-            // Hotel,
-            // pricePerPerson: totalPriceForUser,
-        });
+        setArrival(equal ? new Date(offer['Valida al']) : dateValid ? new Date(checkOutDate) : '');
+        setDeparture(equal ? new Date(offer['Valida dal']) : dateValid ? new Date(checkInDate) : '');
     }, [offer, checkInDate, checkOutDate, Hotel, NomeModulo, totalPriceForUser, dateValid]);
 
-    const handleDepartureChange = (e) => {
-        const departureDateFromForm = new Date(e.target.value);
+    const handleDepartureChange = (value) => {
+        const departureDateFromForm = new Date(value);
         const minNights = parseInt(offer['minimo notti']);
 
-        const minArrivalDateCalc = formatDate(
-            departureDateFromForm.setDate(departureDateFromForm.getDate() + minNights)
-        );
-
-        // arrivalRef?.current?.min(minArrivalDate)
+        const minArrivalDateCalc = departureDateFromForm.setDate(departureDateFromForm.getDate() + minNights);
+        // arrivalRef?.current?.min(minArrivalDate)handleArrivalChange
 
         setMinArrivalDate(minArrivalDateCalc);
-        if (arrivalRef.current) arrivalRef.current.min = minArrivalDateCalc;
     };
 
-    const handleArrivalChange = (e) => {
-        const arrivalDateFromForm = new Date(e.target.value);
+    const handleArrivalChange = (value) => {
+        const arrivalDateFromForm = new Date(value);
         const minNights = parseInt(offer['minimo notti']);
 
-        const maxDepartureDateCalc = formatDate(arrivalDateFromForm.setDate(arrivalDateFromForm.getDate() - minNights));
+        const maxDepartureDateCalc = arrivalDateFromForm.setDate(arrivalDateFromForm.getDate() - minNights);
 
         setMaxDepatureDate(maxDepartureDateCalc);
-        departureRef.current.max = maxDepartureDateCalc;
     };
 
     const handleChange = (e) => {
@@ -193,15 +180,42 @@ const ViewInquiryForm = ({
         setUserData(() => ({ ...userData, rooms: updatedRooms }));
     };
 
+    const optionRef = useRef(null);
+
+    const handleScroll = () => {
+        console.log(optionRef.current);
+        optionRef.current.scrollIntoView({ behavior: 'smooth' });
+    };
     return (
         <>
             {userData ? (
                 <>
-                    <div className="inquiry--form">
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            if (!clicked) {
+                                setClicked(true);
+                                setTimeout(() => {
+                                    handleSubmit(
+                                        formatDate(arrival),
+                                        formatDate(departure),
+                                        NomeModulo,
+                                        Hotel,
+                                        totalPriceForUser,
+                                        selectedPackage.text,
+                                        handleScroll,
+                                        handleOfferClose
+                                    );
+                                    setClicked(false);
+                                }, 1000);
+                            }
+                        }}
+                        className="inquiry--form"
+                    >
                         <div className="row g-3">
                             <div className="col-sm-6 col-md-3">
                                 <Input
-                                    required
+                                    required={true}
                                     type="text"
                                     value={userData.Nome}
                                     name="Nome"
@@ -213,7 +227,7 @@ const ViewInquiryForm = ({
                             <div className="col-sm-6 col-md-3 relative">
                                 <div>
                                     <Input
-                                        required
+                                        required={true}
                                         type="text"
                                         name="Cognome"
                                         value={userData.Cognome}
@@ -246,7 +260,7 @@ const ViewInquiryForm = ({
                                 />
                             </div>
                             <div className="col-sm-6 col-md-3 col-lg-2 relative">
-                                <div className="">
+                                {/* <div className="">
                                     <Input
                                         handleChange={(e) => {
                                             setDeparture(e.target.value);
@@ -267,16 +281,26 @@ const ViewInquiryForm = ({
                                         onKeyDown={(e) => {
                                             e.preventDefault();
                                         }}
-                                        onClick={(e) => {
-                                            try {
-                                                departureRef?.current?.showPicker();
-                                            } catch (err) {}
+                                    />
+                                </div> */}
+
+                                <div className="right-sm-0 w-100">
+                                    <CustomDatePicker
+                                        setDatePickerOpen={setDatePickerOpen}
+                                        minDate={minDepartureDate}
+                                        maxDate={maxDepartureDate}
+                                        selected={departure}
+                                        label="Data Check In"
+                                        placeholder="Seleziona la data"
+                                        handleChange={(value) => {
+                                            setDeparture(value);
+                                            handleDepartureChange(value);
                                         }}
+                                        readOnly={readOnly}
                                     />
                                 </div>
 
-                                <div className="absolute top-0 left-0 right-sm-0 w-100 px-2">
-                                    {/* <Input
+                                {/* <Input
                                         placeholder="Seleziona la data di partenza"
                                         label="Data Check In"
                                         value={userData.departure}
@@ -293,10 +317,9 @@ const ViewInquiryForm = ({
                                             }
                                         }}
                                     /> */}
-                                </div>
                             </div>
                             <div className="col-sm-6 col-md-3 col-lg-2 relative">
-                                <div className="">
+                                {/* <div className="">
                                     <Input
                                         handleChange={(e) => {
                                             setArrival(e.target.value);
@@ -324,6 +347,22 @@ const ViewInquiryForm = ({
                                             e.preventDefault();
                                         }}
                                     />
+                                </div> */}
+
+                                <div className="right-sm-0 w-100 ">
+                                    <CustomDatePicker
+                                        minDate={minArrivalDate}
+                                        maxDate={maxArrivalDate}
+                                        setDatePickerOpen={setDatePickerOpen}
+                                        selected={arrival}
+                                        label="Data Check Out"
+                                        placeholder="Seleziona la data di arrivo"
+                                        handleChange={(value) => {
+                                            setArrival(value);
+                                            handleArrivalChange(value);
+                                        }}
+                                        readOnly={readOnly}
+                                    />
                                 </div>
 
                                 <div className="absolute top-0 left-0 w-100 px-2">
@@ -349,12 +388,19 @@ const ViewInquiryForm = ({
                             </div>
                             <div className="col-sm-6 col-md-3 col-lg-2">
                                 <Input
-                                    value={userData.packageBoard}
-                                    handleChange={handleChange}
+                                    value={selectedPackage.text}
+                                    handleChange={(e) => {
+                                        let index = null;
+                                        selectItems.forEach((item, i) => {
+                                            if (item.text === e.target.value) index = i;
+                                            setSelectedPackage(index);
+                                        });
+                                    }}
                                     name="packageBoard"
                                     label="Pacchetto"
                                     select
-                                    options={packaged}
+                                    required
+                                    options={selectItems}
                                 />
                             </div>
                         </div>
@@ -378,15 +424,18 @@ const ViewInquiryForm = ({
                                 </button>
                             </div>
                         </div>
-                        <h5 className="mt-4 r-title">Offer With</h5>
-                        <div className="__form-radio-group pt-2">
+                        <h5 ref={optionRef} className="mt-4 r-title">
+                            Offerta con
+                        </h5>
+                        <div ref={optionRef} className="__form-radio-group pt-2">
                             <label className="__form-radio">
                                 <div className="form-check">
                                     <input
                                         className="form-check-input"
                                         type="radio"
                                         name="offer-with"
-                                        onChange={(e) => setvalue('')}
+                                        checked={value === 'none'}
+                                        onChange={(e) => setvalue('none')}
                                     />
                                     <div className="form-check-label">Nessuna Opzione</div>
                                 </div>
@@ -398,6 +447,7 @@ const ViewInquiryForm = ({
                                         className="form-check-input"
                                         type="radio"
                                         name="offer-with"
+                                        checked={value === 'aliscafo'}
                                         onChange={(e) => setvalue('aliscafo')}
                                     />
                                     <div className="form-check-label">Aliscafo + Transfer</div>
@@ -426,6 +476,7 @@ const ViewInquiryForm = ({
                                         className="form-check-input"
                                         type="radio"
                                         name="offer-with"
+                                        checked={value === 'ferry'}
                                         onChange={(e) => setvalue('ferry')}
                                     />
                                     <div className="form-check-label">Traghetto + Transfer</div>
@@ -482,14 +533,13 @@ const ViewInquiryForm = ({
                                         className="form-check-input"
                                         type="radio"
                                         name="offer-with"
+                                        checked={value === 'viaggio'}
                                         onChange={(e) => setvalue('viaggio')}
                                     />
                                     <div className="form-check-label">Viaggio dalla tua citta</div>
                                 </div>
                                 <div className="text">
-                                    Train from the main Italian cities, with transfer from Naples station to the port,
-                                    sea passages from Naples to Ischia, taxi from the port to the hotel starting from €
-                                    160.00 per person round trip.
+                                    Viaggio incluso dalla tua città fino al trasferimento all'hotel
                                 </div>
                                 {value == 'viaggio' && (
                                     <div className="row g-3 mt-2">
@@ -526,14 +576,25 @@ const ViewInquiryForm = ({
                             name="note"
                             onChange={handleChange}
                             className="form-control __form-control p-3"
-                            placeholder="Text..."
+                            placeholder="Note Extra, Richieste Particolari, Etc..."
                         ></textarea>
                         <div className="mt-3"></div>
                         <label className="form-check form--check">
-                            <input className="form-check-input" type="checkbox" value="" id="flexCheckDefault" />
+                            <input
+                                required
+                                className="form-check-input"
+                                type="checkbox"
+                                value=""
+                                id="flexCheckDefault"
+                            />
                             <span className="form-check-label">
                                 Ho preso visione e acconsento al{' '}
-                                <a href="#" className="text-base">
+                                <a
+                                    href="https://www.hoescape.com/privacy-policy/"
+                                    className="text-base"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
                                     trattamento dei miei dati personali in conformitä al Regolamento europeo 679/2016 *
                                 </a>
                             </span>
@@ -545,38 +606,26 @@ const ViewInquiryForm = ({
                                 Dichiaro di volermi iscrivere al servizio newsletter per ricevere Ie migliori offerte
                             </span>
                         </label>
-                    </div>
-                    {buttonDisabled ? (
-                        <div className="pt-4">
-                            <button style={{ opacity: 0.7 }} className="cmn-btn w-100" type="button">
-                                Preventivo Richiesto
-                            </button>
-                        </div>
-                    ) : (
-                        <div
-                            onClick={(e) => {
-                                e.preventDefault();
-                                if (!clicked) {
-                                    setClicked(true);
-                                    setTimeout(() => {
-                                        handleSubmit(arrival, departure, NomeModulo, Hotel, totalPriceForUser);
-                                        setClicked(false);
-                                    }, 1000);
-                                }
-                            }}
-                            className="pt-4"
-                        >
-                            <button className="cmn-btn w-100" type="button">
-                                {sending ? (
-                                    <img style={{ width: '25px' }} src={loading.src} alt="loading" />
-                                ) : (
-                                    <>
-                                        Richiedi Preventivo <Send />
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    )}
+                        {buttonDisabled ? (
+                            <div className="pt-4">
+                                <button style={{ opacity: 0.7 }} className="cmn-btn w-100" type="button">
+                                    Preventivo Inviato
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="pt-4">
+                                <button className="cmn-btn w-100" type="submit">
+                                    {sending ? (
+                                        <img style={{ width: '25px' }} src={loading.src} alt="loading" />
+                                    ) : (
+                                        <>
+                                            Richiedi Preventivo <Send />
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        )}
+                    </form>
                 </>
             ) : (
                 <>
@@ -611,15 +660,4 @@ const options3 = [
     },
 ];
 
-const packaged = [
-    {
-        options: '1',
-        text: 'Mezza pensione',
-    },
-    {
-        options: '2',
-        text: 'Pensione completa',
-    },
-];
-
-export default ViewInquiryForm;
+export default React.forwardRef(ViewInquiryForm);

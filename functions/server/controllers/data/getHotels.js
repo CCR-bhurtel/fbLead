@@ -158,13 +158,13 @@ const filterDistance = (distance, records) => {
         case 1:
             return records.filter((record) => {
                 const distance = getDistance(record);
-                return  distance >= 0 && distance < 500;
+                return distance >= 0 && distance < 500;
             });
         case 2:
             return records.filter((record) => {
                 const distance = getDistance(record);
 
-                return  distance >= 500 && distance <= 1000;
+                return distance >= 500 && distance <= 1000;
             });
 
         case 3:
@@ -193,9 +193,206 @@ const sortRecordsOnPriorita = (records) => {
     });
 };
 
+const getFilters = (
+    hotelRecords,
+    lastChange,
+    currentComunes,
+    currentDistances,
+    currentFascio,
+    currentStelles,
+    stelle,
+    comune,
+    fascio,
+    distance,
+    filterFor
+) => {
+    const comunes = ["Tutta l'isola"];
+
+    const stelles = ['Tutti'];
+
+    const fascias = ['Tutti'];
+
+    const distances = ['Tutti'];
+
+    let fasciasWithName = [{ name: 'Tutti', value: 0 }];
+    let distancesWithName = [{ name: 'Tutti', value: 0 }];
+
+    if (comune.name !== "Tutta l'isola" && filterFor !== 'comune')
+        hotelRecords = filterCommune(comune.name, hotelRecords);
+
+    if (distance.value !== 0 && filterFor !== 'distance') hotelRecords = filterDistance(distance, hotelRecords);
+
+    if (stelle.name !== 'Tutti' && filterFor !== 'stelle') hotelRecords = filterStelle(stelle.name, hotelRecords);
+
+    if (fascio.value !== 0 && filterFor !== 'fascio') hotelRecords = filterFascio(fascio, hotelRecords);
+    hotelRecords.forEach((hotel) => {
+        const comuneFromHotel = hotel.Comune.trim();
+        const stelleFromHotel = hotel['Stelle struttura'];
+        const fasciaFromHotel = hotel['Prezzo Minore'];
+        const distance_hotel = getDistance(hotel);
+
+        let condition = false;
+
+        /*
+        if(lastChanged==="comune") condition = comuneFromHotel===comune.name
+         */
+
+        switch (lastChange) {
+            case 'comune':
+                if (comune.name === "Tutta l'isola") condition = true;
+                else condition = comuneFromHotel === comune.name;
+                break;
+
+            case 'stelle':
+                if (stelle.name === 'Tutti') condition = true;
+                else condition = stelleFromHotel === stelle.name;
+                break;
+
+            case 'distance':
+                if (distance.value === 0) condition = true;
+                else if (distance.value === 1) {
+                    condition = distance_hotel >= 0 && distance_hotel < 500;
+                } else if (distance.value === 2) {
+                    condition = distance_hotel >= 500 && distance_hotel <= 1000;
+                } else if (distance.value === 3) {
+                    condition = distance_hotel > 1000;
+                }
+
+                break;
+
+            case 'fascio':
+                if (fascio.value === 0) condition = true;
+                else if (fascio.value === 1) condition = fasciaFromHotel < 40;
+                else if (fascio.value === 2) condition = fasciaFromHotel >= 40 && fasciaFromHotel <= 80;
+                else if (fascio.value === 3) condition = fasciaFromHotel > 80;
+                break;
+
+            default:
+                condition = true;
+                break;
+        }
+        // {
+        //     name: 'fino a 40€',
+        //     value: 1,
+        // },
+        // {
+        //     name: 'tra 40€ e 80€',
+        //     value: 2,
+        // },
+        // {
+        //     name: 'più di 80€',
+        //     value: 3,
+        // },
+
+        let conditionStelle = lastChange === 'stelle' || condition;
+        let conditionComune = lastChange === 'comune' || condition;
+        let conditionFascia = lastChange === 'fascio' || condition;
+        let conditionDistance = lastChange === 'distance' || condition;
+
+        if (!stelles.includes(stelleFromHotel) && conditionStelle) stelles.push(stelleFromHotel);
+
+        if (!comunes.includes(comuneFromHotel) && conditionComune) comunes.push(comuneFromHotel);
+
+        if (conditionFascia) {
+            if (fasciaFromHotel < 40 && !fascias.includes('fino a 40€')) {
+                fascias.push('fino a 40€');
+                fasciasWithName.push({ name: 'fino a 40€', value: 1 });
+            }
+            if (fasciaFromHotel >= 40 && fasciaFromHotel <= 80 && !fascias.includes('tra 40€ e 80€')) {
+                fascias.push('tra 40€ e 80€');
+                fasciasWithName.push({ name: 'tra 40€ e 80€', value: 2 });
+            }
+            if (fasciaFromHotel > 80 && !fascias.includes('più di 80€')) {
+                fascias.push('più di 80€');
+                fasciasWithName.push({ name: 'più di 80€', value: 3 });
+            }
+        }
+
+        // {
+        //     name: '0 mt - 500 mt',
+        //     value: 1,
+        // },
+        // {
+        //     name: '500 mt - 1 km',
+        //     value: 2,
+        // },
+        // {
+        //     name: '1 km+',
+        //     value: 3,
+        // },
+        if (conditionDistance) {
+            if (distance_hotel >= 0 && distance_hotel < 500 && !distances.includes('0 mt - 500 mt')) {
+                distances.push('0 mt - 500 mt');
+                distancesWithName.push({ name: '0 mt - 500 mt', value: 1 });
+            } else if (distance_hotel >= 500 && distance_hotel < 1000 && !distances.includes('500 mt - 1 km')) {
+                distances.push('500 mt - 1 km');
+                distancesWithName.push({ name: '500 mt - 1 km', value: 2 });
+            } else if (distance_hotel > 1000 && !distances.includes('1 km+')) {
+                distances.push('1 km+');
+                distancesWithName.push({ name: '1 km+', value: 3 });
+            }
+        }
+    });
+
+    let comunesWithName = comunes.map((comune) => ({ name: comune }));
+    let stellesWithName = stelles.map((stelle) => ({ name: stelle }));
+
+    comunesWithName = comunesWithName.sort((a, b) => (a.name === comune.name ? -1 : 1));
+    fasciasWithName = fasciasWithName.sort((a, b) => {
+        if (a.name === fascio.name) return -1;
+        if (b.name === fascio.name) return 1;
+        return a.value - b.value;
+    });
+    stellesWithName = [
+        { name: 'Tutti' },
+        ...stellesWithName.slice(1).sort((a, b) => {
+            let stellevalueA = parseInt(a.name.split(' '));
+            let stellevalueB = parseInt(b.name.split(' '));
+            return stellevalueA - stellevalueB;
+        }),
+    ];
+
+    distancesWithName = distancesWithName.sort((a, b) => {
+        if (a.name === distance.name) return -1;
+        if (b.name === distance.name) return 1;
+        return a.value - b.value;
+    });
+
+    const filters = {
+        comunes:
+            lastChange === 'comune'
+                ? comune.name === "Tutta l'isola"
+                    ? comunesWithName
+                    : currentComunes
+                : comunesWithName,
+        stelles:
+            lastChange === 'stelle' ? (stelle.name === 'Tutti' ? stellesWithName : currentStelles) : stellesWithName,
+        fascias: lastChange === 'fascio' ? (fascio.value === 0 ? fasciasWithName : currentFascio) : fasciasWithName,
+        distances:
+            lastChange === 'distance'
+                ? distance.value === 0
+                    ? distancesWithName
+                    : currentDistances
+                : distancesWithName,
+    };
+    return filters;
+};
+
 exports.getHotelData = catchAsync(async (req, res, next) => {
-    let { checkInDate, checkOutDate, comune, distance, fascio, stelle } = req.body;
-    console.log(comune, distance, stelle, fascio);
+    let {
+        checkInDate,
+        checkOutDate,
+        comune,
+        distance,
+        fascio,
+        stelle,
+        lastChange,
+        currentComunes,
+        currentDistances,
+        currentStelles,
+        currentFascio,
+    } = req.body;
+
     //  fetch data from offerte hotel with the required checkInDate and checkOutDate
 
     // "Valida dal": "2023-08-11",
@@ -290,41 +487,100 @@ exports.getHotelData = catchAsync(async (req, res, next) => {
         }
     });
 
-    const comunes = ["Tutta l'isola"];
-
-    const stelles = ['Tutti'];
-
     if (!hotelRecords.length) {
         return res.status(200).json({
             hotels: [],
             filters: {
                 comunes: [{ name: "Tutta l'isola" }],
                 stelles: [{ name: 'Tutti' }],
+                fascias: [{ name: 'Tutti' }],
+                distances: [{ name: 'Tutti' }],
             },
         });
     }
 
-    hotelRecords.forEach((hotel) => {
-        const comuneFromHotel = hotel.Comune.trim();
-        const stelleFromHotel = hotel['Stelle struttura'];
+    const filterForCommunes = getFilters(
+        hotelRecords,
+        lastChange,
+        currentComunes,
+        currentDistances,
+        currentFascio,
+        currentStelles,
+        stelle,
+        comune,
+        fascio,
+        distance,
+        'comune'
+    );
 
-        if (!stelles.includes(stelleFromHotel)) stelles.push(stelleFromHotel);
+    const filterForStelles = getFilters(
+        hotelRecords,
+        lastChange,
+        currentComunes,
+        currentDistances,
+        currentFascio,
+        currentStelles,
+        stelle,
+        comune,
+        fascio,
+        distance,
+        'stelle'
+    );
 
-        if (!comunes.includes(comuneFromHotel)) comunes.push(comuneFromHotel);
-    });
+    const filterForDistances = getFilters(
+        hotelRecords,
+        lastChange,
+        currentComunes,
+        currentDistances,
+        currentFascio,
+        currentStelles,
+        stelle,
+        comune,
+        fascio,
+        distance,
+        'distance'
+    );
 
-    let comunesWithName = comunes.map((comune) => ({ name: comune }));
-    let stellesWithName = stelles.map((stelle) => ({ name: stelle }));
+    const filterForFascio = getFilters(
+        hotelRecords,
+        lastChange,
+        currentComunes,
+        currentDistances,
+        currentFascio,
+        currentStelles,
+        stelle,
+        comune,
+        fascio,
+        distance,
+        'fascio'
+    );
 
-    comunesWithName = comunesWithName.sort((a, b) => (a.name === comune.name ? -1 : 1));
-    stellesWithName = [
-        { name: 'Tutti' },
-        ...stellesWithName.slice(1).sort((a, b) => {
-            let stellevalueA = parseInt(a.name.split(' '));
-            let stellevalueB = parseInt(b.name.split(' '));
-            return stellevalueA - stellevalueB;
-        }),
-    ];
+    const filters = {
+        comunes:
+            lastChange === 'comune'
+                ? comune.name === "Tutta l'isola"
+                    ? filterForCommunes.comunes
+                    : currentComunes
+                : filterForCommunes.comunes,
+        stelles:
+            lastChange === 'stelle'
+                ? stelle.name === 'Tutti'
+                    ? filterForStelles.stelles
+                    : currentStelles
+                : filterForStelles.stelles,
+        fascias:
+            lastChange === 'fascio'
+                ? fascio.value === 0
+                    ? filterForFascio.fascias
+                    : currentFascio
+                : filterForFascio.fascias,
+        distances:
+            lastChange === 'distance'
+                ? distance.value === 0
+                    ? filterForDistances.distances
+                    : currentDistances
+                : filterForDistances.distances,
+    };
 
     if (comune.name !== "Tutta l'isola") hotelRecords = filterCommune(comune.name, hotelRecords);
 
@@ -361,13 +617,177 @@ exports.getHotelData = catchAsync(async (req, res, next) => {
         return distanceValueA - distanceValueB;
     });
 
+    // final filter changes here
+
+    const comunes = ["Tutta l'isola"];
+
+    const stelles = ['Tutti'];
+
+    const fascias = ['Tutti'];
+
+    const distances = ['Tutti'];
+
+    let fasciasWithName = [{ name: 'Tutti', value: 0 }];
+    let distancesWithName = [{ name: 'Tutti', value: 0 }];
+
+    if (comune.name !== "Tutta l'isola") hotelRecords = filterCommune(comune.name, hotelRecords);
+
+    if (distance.value !== 0) hotelRecords = filterDistance(distance, hotelRecords);
+
+    if (stelle.name !== 'Tutti') hotelRecords = filterStelle(stelle.name, hotelRecords);
+
+    if (fascio.value !== 0) hotelRecords = filterFascio(fascio, hotelRecords);
+    hotelRecords.forEach((hotel) => {
+        const comuneFromHotel = hotel.Comune.trim();
+        const stelleFromHotel = hotel['Stelle struttura'];
+        const fasciaFromHotel = hotel['Prezzo Minore'];
+        const distance_hotel = getDistance(hotel);
+
+        let condition = false;
+
+        /*
+        if(lastChanged==="comune") condition = comuneFromHotel===comune.name
+         */
+
+        switch (lastChange) {
+            case 'comune':
+                if (comune.name === "Tutta l'isola") condition = true;
+                else condition = comuneFromHotel === comune.name;
+                break;
+
+            case 'stelle':
+                if (stelle.name === 'Tutti') condition = true;
+                else condition = stelleFromHotel === stelle.name;
+                break;
+
+            case 'distance':
+                if (distance.value === 0) condition = true;
+                else if (distance.value === 1) {
+                    condition = distance_hotel >= 0 && distance_hotel < 500;
+                } else if (distance.value === 2) {
+                    condition = distance_hotel >= 500 && distance_hotel <= 1000;
+                } else if (distance.value === 3) {
+                    condition = distance_hotel > 1000;
+                }
+
+                break;
+
+            case 'fascio':
+                if (fascio.value === 0) condition = true;
+                else if (fascio.value === 1) condition = fasciaFromHotel < 40;
+                else if (fascio.value === 2) condition = fasciaFromHotel >= 40 && fasciaFromHotel <= 80;
+                else if (fascio.value === 3) condition = fasciaFromHotel > 80;
+                break;
+
+            default:
+                condition = true;
+                break;
+        }
+        // {
+        //     name: 'fino a 40€',
+        //     value: 1,
+        // },
+        // {
+        //     name: 'tra 40€ e 80€',
+        //     value: 2,
+        // },
+        // {
+        //     name: 'più di 80€',
+        //     value: 3,
+        // },
+
+        let conditionStelle = lastChange === 'stelle' || condition;
+        let conditionComune = lastChange === 'comune' || condition;
+        let conditionFascia = lastChange === 'fascio' || condition;
+        let conditionDistance = lastChange === 'distance' || condition;
+
+        if (!stelles.includes(stelleFromHotel) && conditionStelle) stelles.push(stelleFromHotel);
+
+        if (!comunes.includes(comuneFromHotel) && conditionComune) comunes.push(comuneFromHotel);
+
+        if (conditionFascia) {
+            if (fasciaFromHotel < 40 && !fascias.includes('fino a 40€')) {
+                fascias.push('fino a 40€');
+                fasciasWithName.push({ name: 'fino a 40€', value: 1 });
+            }
+            if (fasciaFromHotel >= 40 && fasciaFromHotel <= 80 && !fascias.includes('tra 40€ e 80€')) {
+                fascias.push('tra 40€ e 80€');
+                fasciasWithName.push({ name: 'tra 40€ e 80€', value: 2 });
+            }
+            if (fasciaFromHotel > 80 && !fascias.includes('più di 80€')) {
+                fascias.push('più di 80€');
+                fasciasWithName.push({ name: 'più di 80€', value: 3 });
+            }
+        }
+
+        // {
+        //     name: '0 mt - 500 mt',
+        //     value: 1,
+        // },
+        // {
+        //     name: '500 mt - 1 km',
+        //     value: 2,
+        // },
+        // {
+        //     name: '1 km+',
+        //     value: 3,
+        // },
+        if (conditionDistance) {
+            if (distance_hotel >= 0 && distance_hotel < 500 && !distances.includes('0 mt - 500 mt')) {
+                distances.push('0 mt - 500 mt');
+                distancesWithName.push({ name: '0 mt - 500 mt', value: 1 });
+            } else if (distance_hotel >= 500 && distance_hotel < 1000 && !distances.includes('500 mt - 1 km')) {
+                distances.push('500 mt - 1 km');
+                distancesWithName.push({ name: '500 mt - 1 km', value: 2 });
+            } else if (distance_hotel > 1000 && !distances.includes('1 km+')) {
+                distances.push('1 km+');
+                distancesWithName.push({ name: '1 km+', value: 3 });
+            }
+        }
+    });
+
+    let comunesWithName = comunes.map((comune) => ({ name: comune }));
+    let stellesWithName = stelles.map((stelle) => ({ name: stelle }));
+
+    comunesWithName = comunesWithName.sort((a, b) => (a.name === comune.name ? -1 : 1));
+    fasciasWithName = fasciasWithName.sort((a, b) => {
+        if (a.name === fascio.name) return -1;
+        if (b.name === fascio.name) return 1;
+        return a.value - b.value;
+    });
+    stellesWithName = [
+        { name: 'Tutti' },
+        ...stellesWithName.slice(1).sort((a, b) => {
+            let stellevalueA = parseInt(a.name.split(' '));
+            let stellevalueB = parseInt(b.name.split(' '));
+            return stellevalueA - stellevalueB;
+        }),
+    ];
+
+    distancesWithName = distancesWithName.sort((a, b) => {
+        if (a.name === distance.name) return -1;
+        if (b.name === distance.name) return 1;
+        return a.value - b.value;
+    });
+
+    // const filters = {
+    //     comunes:
+    //         lastChange === 'comune'
+    //             ? comune.name === "Tutta l'isola"
+    //                 ? comunesWithName
+    //                 : currentComunes
+    //             : comunesWithName,
+    //     stelles:
+    //         lastChange === 'stelle' ? (stelle.name === 'Tutti' ? stellesWithName : currentStelles) : stellesWithName,
+    //     fascias: lastChange === 'fascio' ? (fascio.value === 0 ? fasciasWithName : currentFascio) : fasciasWithName,
+    //     distances:
+    //         lastChange === 'distance' ? (distance.value === 0 ? distances : currentDistances) : distancesWithName,
+    // };
+
     if (!sortedHotelsOnDistanzaMare.length)
         return res.status(200).json({
             hotels: [],
-            filters: {
-                comunes: comunesWithName,
-                stelles: stellesWithName,
-            },
+            filters,
         });
 
     let hotelWithLowestDistanzaMare = { ...sortedHotelsOnDistanzaMare[0], ticker: 'Più vicino al mare' };
@@ -377,10 +797,7 @@ exports.getHotelData = catchAsync(async (req, res, next) => {
     if (!sortedHotelsOnPriorita.length)
         return res.status(200).json({
             hotels: [hotelWithLowestDistanzaMare],
-            filters: {
-                comunes: comunesWithName,
-                stelles: stellesWithName,
-            },
+            filters,
         });
 
     let hotelWithLowestPriorita = { ...sortedHotelsOnPriorita[0], ticker: 'Più Venduto' };
@@ -397,10 +814,7 @@ exports.getHotelData = catchAsync(async (req, res, next) => {
     if (!sortedHotelsOnPrezzo.length)
         return res.status(200).json({
             hotels: [hotelWithLowestDistanzaMare, hotelWithLowestPriorita],
-            filters: {
-                comunes: comunesWithName,
-                stelles: stellesWithName,
-            },
+            filters,
         });
     let hotelWithLowestPrezzo = { ...sortedHotelsOnPrezzo[0], ticker: 'Prezzo più basso' };
 
@@ -408,10 +822,7 @@ exports.getHotelData = catchAsync(async (req, res, next) => {
 
     return res.status(200).json({
         hotels: [hotelWithLowestDistanzaMare, hotelWithLowestPriorita, hotelWithLowestPrezzo, ...remainingRecords],
-        filters: {
-            comunes: comunesWithName,
-            stelles: stellesWithName,
-        },
+        filters,
     });
     //  filter hotels with given other filters
 

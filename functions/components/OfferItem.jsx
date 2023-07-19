@@ -26,7 +26,7 @@ import {
 } from './Icon';
 import OfferPriceSlider from './OfferPriceSlider';
 import axios from 'axios';
-const OfferItem = (props) => {
+const OfferItem = (props, ref) => {
     const {
         offer,
         index,
@@ -41,6 +41,7 @@ const OfferItem = (props) => {
         handleSubmit,
         buttonDisabled,
         handleUpdateRooms,
+        setDatePickerOpen,
     } = props;
 
     const [loadingOffers, setLoadingOffers] = useState(false);
@@ -184,8 +185,8 @@ const OfferItem = (props) => {
                                 <img src={review.src} alt="" />
 
                                 <div>
-                                    {hotel['Stelle struttura'] ? <div>{hotel['Stelle struttura'][0]}/5</div> : <></>}
-                                    <div className="subtxt">({hotel.reviews} Reviews)</div>
+                                    {hotel['Stelle struttura'] ? <div>5/5</div> : <></>}
+                                    <div className="subtxt">({hotel.reviews} Recensioni)</div>
                                 </div>
                             </div>
                             <h6 className="subtitle">
@@ -224,12 +225,12 @@ const OfferItem = (props) => {
                             <button
                                 className={`cmn-btn ${offerOpen ? 'disable' : ''}`}
                                 data-bs-toggle="collapse"
-                                data-bs-target={`#offer-${index}`}
+                                // data-bs-target={`#offer-${index}`}
                                 onClick={() => setOfferOpen(!offerOpen)}
                             >
                                 {offerOpen ? (
                                     <span className="text-title">
-                                        Close Offer <AngleUp />
+                                        Chiudi Offerta <AngleUp />
                                     </span>
                                 ) : (
                                     <span>
@@ -259,40 +260,46 @@ const OfferItem = (props) => {
                     </div>
                 </div>
             </div>
-            <div className="offer-item-middle collapse" id={`offer-${index}`}>
-                <div className="overlayer" />
 
-                {loadingOffers ? (
-                    <OffersLoading />
-                ) : offers && offers.length ? (
-                    <OfferPriceSlider
-                        setUserData={setUserData}
-                        userData={userData}
-                        sending={sending}
-                        setvalue={setvalue}
-                        value={value}
-                        handleSubmit={handleSubmit}
-                        offers={offers}
-                        hotel={hotel}
-                        checkInDate={checkInDate}
-                        checkOutDate={checkOutDate}
-                        setOfferButtonIn={setOfferButtonIn}
-                        offerButtonIn={offerButtonIn}
-                        serial={index}
-                        buttonDisabled={buttonDisabled}
-                        handleUpdateRooms={handleUpdateRooms}
-                    />
-                ) : (
-                    <>
-                        <h1>No offers to show</h1>
-                    </>
-                )}
-            </div>
+            {!offerOpen ? null : (
+                <div className="offer-item-middle " id={`offer-${index}`}>
+                    <div className="overlayer" />
+                    {loadingOffers ? (
+                        <OffersLoading />
+                    ) : offers && offers.length ? (
+                        <OfferPriceSlider
+                            setUserData={setUserData}
+                            userData={userData}
+                            sending={sending}
+                            setvalue={setvalue}
+                            value={value}
+                            handleSubmit={handleSubmit}
+                            offers={offers}
+                            hotel={hotel}
+                            checkInDate={checkInDate}
+                            checkOutDate={checkOutDate}
+                            setOfferButtonIn={setOfferButtonIn}
+                            offerButtonIn={offerButtonIn}
+                            serial={index}
+                            setDatePickerOpen={setDatePickerOpen}
+                            buttonDisabled={buttonDisabled}
+                            handleUpdateRooms={handleUpdateRooms}
+                            handleOfferClose={() => {
+                                setOfferOpen(!offerOpen);
+                            }}
+                        />
+                    ) : (
+                        <>
+                            <h1>No offers to show</h1>
+                        </>
+                    )}
+                </div>
+            )}
         </div>
     );
 };
 
-export default OfferItem;
+export default React.forwardRef(OfferItem);
 
 const OffersLoading = () => {
     return <img src={loading.src} alt="loading" className="w-[2rem] h-[2rem]" />;

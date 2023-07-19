@@ -1,151 +1,101 @@
-import moment from 'moment';
-import 'moment/locale/it';
-import { useEffect, useState } from 'react';
-import { BsArrowLeft, BsArrowRight } from 'react-icons/bs';
-import CalenderItem from './CalenderItem';
+import React, { useState, useRef, useEffect } from 'react';
+import DatePicker, { registerLocale } from 'react-datepicker';
+import it from 'date-fns/locale/it';
+import 'react-datepicker/dist/react-datepicker.css';
+import { max } from 'date-fns';
 
-export default function CalenderEnquiry({ handler, setCheckData, setConfig, config }) {
+registerLocale('it', it);
+
+const CustomDatePicker = ({
+    selected,
+    inputRef,
+    minDate,
+    maxDate,
+    label,
+    placeholder,
+    handleChange,
+    readOnly,
+    setDatePickerOpen,
+}) => {
+    const datePickerRef = useRef(null);
+
+    const [minimumDate, setminimumDate] = useState(minDate);
+    const [maximumDate, setmaximumDate] = useState(maxDate);
+
     useEffect(() => {
-        // Set Italian as the default locale
-        moment.locale('it');
-    }, []);
+        setminimumDate(new Date(minDate));
+        setmaximumDate(new Date(maxDate));
+    }, [minDate, maxDate]);
 
-    const [firstMon, setFirstMon] = useState({
-        year: new Date().getFullYear(),
-        month: new Date().getMonth(),
-    });
-    const [lasttMon, setLastMon] = useState({
-        year: new Date().getFullYear(),
-        month: firstMon.month + 1,
-    });
+    // useEffect(() => {
+    //     if (inputRef && inputRef.current) {
+    //         inputRef.current.addEventListener('focus', handleInputFocus);
+    //     }
 
-    const [selectDate, setSelectDate] = useState([config.departure, config.arrival]);
+    //     return () => {
+    //         if (inputRef && inputRef.current) {
+    //             inputRef.current.removeEventListener('focus', handleInputFocus);
+    //         }
+    //     };
+    // }, [inputRef]);
 
-    const selectHandler = (e) => {
-        setSelectDate((prev) => {
-            if (prev.length === 0) {
-                return [e];
-            } else if (prev.length === 1) {
-                if (prev[0] !== e) {
-                    if (prev[0] < e) {
-                        return [...prev, e];
-                    } else {
-                        return [e, ...prev];
-                    }
-                } else {
-                    return [...prev];
-                }
-            } else if (prev.length === 2) {
-                if (prev[1] > e) {
-                    return [e];
-                } else {
-                    prev.pop();
-                    if (prev[0] < e) {
-                        return [...prev, e];
-                    } else {
-                        return [e, ...prev];
-                    }
-                }
+    const handleInputFocus = (e) => {
+        e.target.blur();
+        if (datePickerRef.current) {
+            datePickerRef.current.setOpen(true);
+
+            try {
+                document.activeElement.blur(); // Close the keyboard
+            } catch (err) {
+                console.log(err);
             }
-        });
-    };
-
-    const firstArrow = () => {
-        setFirstMon((prev) => {
-            return { ...prev, month: prev.month - 1 };
-        });
-        setLastMon((prev) => {
-            return { ...prev, month: prev.month - 1 };
-        });
-    };
-    const lastArrow = () => {
-        setFirstMon((prev) => {
-            return { ...prev, month: prev.month + 1 };
-        });
-        setLastMon((prev) => {
-            return { ...prev, month: prev.month + 1 };
-        });
-    };
-
-    const submitHandler = () => {
-        const data = {
-            start: new Date(selectDate[0]),
-            end: new Date(selectDate[1]),
-        };
-        if (selectDate.length === 2) {
-            setCheckData(data);
-            setConfig({ ...config, departure: data.start, arrival: data.end });
-            handler(false);
+        }
+        if (!readOnly) {
+            setDatePickerOpen(true);
         }
     };
 
-    const [night, setNight] = useState();
-    useEffect(() => {
-        setNight(
-            Math.ceil((new Date(selectDate[1]).getTime() - new Date(selectDate[0]).getTime()) / (1000 * 60 * 60 * 24))
-        );
-    }, [selectDate]);
+    const handleDateChange = (date) => {
+        handleChange(date);
+    };
 
-    const [screenW, setScreenW] = useState(window.innerWidth);
-    useEffect(() => {
-        setScreenW(window.innerWidth);
-    }, [screenW]);
-
+    const formatDate = (date) => {
+        // Customize the date format as per your requirements
+        const formattedDate = date.toISOString().split('T')[0];
+        return formattedDate;
+    };
     return (
-        <div className="calender-wrp">
-            <div className="calender">
-                <div className="calender-head">
-                    <div className="btn">
-                        {selectDate?.length === 2 && (
-                            <a href="#">{(night && night === 1 && night + ' notte') || night + ' notti'}</a>
-                        )}
-                    </div>
-
-                    <strong>
-                        Date Selezionate:{' '}
-                        {selectDate?.length === 2 &&
-                            `${moment(selectDate[0]).format('DD MMMM')} to ${moment(selectDate[1]).format('DD MMMM')}`}
-                    </strong>
-                </div>
-                <div className="calender-body">
-                    <div className="arrow-btns">
-                        <button onClick={firstArrow}>
-                            <BsArrowLeft />
-                        </button>
-                        <button onClick={lastArrow}>
-                            <BsArrowRight />
-                        </button>
-                    </div>
-                    <CalenderItem data={firstMon} select={{ selectDate, handler: selectHandler }} />
-                    {screenW > 600 && <CalenderItem data={lasttMon} select={{ selectDate, handler: selectHandler }} />}
-                </div>
-                <div className="calender-footer">
-                    <div className="calender-footer-color">
-                        <div>
-                            <span className="cheap"></span> <p>€</p>
-                        </div>
-                        <div>
-                            <span className="medium"></span> <p>€€</p>
-                        </div>
-                        <div>
-                            <span className="expensive"></span> <p>€€€</p>
-                        </div>
-                    </div>
-                    <div className="calender-footer-btns">
-                        <button
-                            className="cancel"
-                            onClick={() => {
-                                handler(false);
-                            }}
-                        >
-                            Cancel
-                        </button>
-                        <button onClick={submitHandler} className="success">
-                            Cera le offerte!
-                        </button>
-                    </div>
-                </div>
-            </div>
+        <div className="position-relative mt-2">
+            <label className="__form-label" style={{ zIndex: 100, position: 'absolute', top: -5 }}>
+                <span className="pe-0">{label}</span>*
+            </label>
+            <DatePicker
+                onKeyDown={(e) => {
+                    e.preventDefault();
+                }}
+                locale={'it'}
+                className="form-control __form-control z-5"
+                minDate={minimumDate}
+                maxDate={maximumDate}
+                selected={selected}
+                onChange={(date) => {
+                    handleDateChange(date);
+                    setDatePickerOpen(false);
+                }}
+                onSelect={() => {
+                    setDatePickerOpen(false);
+                }}
+                onFocus={handleInputFocus}
+                dateFormat="dd-MM-yyyy" // Customize the date format as per your requirements
+                // ref={datePickerRef}
+                popperPlacement="bottom-start"
+                onClickOutside={() => setDatePickerOpen(false)}
+                withPortal
+                placeholderText={placeholder}
+                readOnly={readOnly}
+            />
         </div>
     );
-}
+};
+
+export default CustomDatePicker;

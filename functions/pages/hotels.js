@@ -17,12 +17,20 @@ function Hotel() {
     const [initialDataLoaded, setInitialDataLoaded] = useState(false);
     const [initialConfigData, setInitialConfigData] = useState(null);
 
+    const [lastChange, setLastChange] = useState(null);
+
+    const [datePickerOpen, setDatePickerOpen] = useState(false);
+
     const [config, setConfig] = useState(null);
     const [hotels, setHotels] = useState([]);
 
     const [comunes, setComunes] = useState([]);
 
     const [stelles, setStelles] = useState([]);
+
+    const [fascias, setFascias] = useState([]);
+
+    const [distances, setDistances] = useState([]);
 
     const router = useRouter();
 
@@ -37,6 +45,8 @@ function Hotel() {
 
             response.data && setComunes(response.data.comunes);
             response.data && setStelles(response.data.stelles);
+            response.data && setFascias(response.data.fascio);
+            response.data && setDistances(response.data.distances);
         } catch (err) {
             setLoadingInitialData(false);
             toast.error('Error loading initial props');
@@ -70,19 +80,31 @@ function Hotel() {
 
             const hotels = await axios.post(`/api/data/hotelData`, {
                 ...config,
+                lastChange,
+                currentComunes: comunes,
+                currentDistances: distances,
+                currentStelles: stelles,
+                currentFascio: fascias,
             });
             setHotels(hotels.data.hotels);
+
+            setLastChange(null);
 
             // setConfig({ ...config, comune: hotels.data.filters.selectedComune });
             // setInitialConfigData({ ...initialConfigData });
             setComunes(hotels.data.filters.comunes);
 
             setStelles(hotels.data.filters.stelles);
+
+            setDistances(hotels.data.filters.distances);
+
+            setFascias(hotels.data.filters.fascias);
             // selectedComune,
             // comunes: comunesWithName,
         } catch (err) {
             setHotels([]);
             toast.error('Error loading hotels');
+            setLastChange(null);
 
             setloadingHotels(false);
         }
@@ -90,6 +112,7 @@ function Hotel() {
 
     const handleConfigChange = (type, value) => {
         setConfig({ ...config, [type]: value });
+        setLastChange(type);
     };
 
     useEffect(() => {
@@ -134,6 +157,8 @@ function Hotel() {
                         initialConfigData={initialConfigData}
                         comunes={comunes}
                         stelles={stelles}
+                        fascias={fascias}
+                        distances={distances}
                         config={config}
                         handleConfigChange={handleConfigChange}
                     />
@@ -142,6 +167,7 @@ function Hotel() {
                             hotels={hotels}
                             checkInDate={config.checkInDate}
                             checkOutDate={config.checkOutDate}
+                            setDatePickerOpen={setDatePickerOpen}
                         />
                     ) : (
                         <h1 style={{ minHeight: '10rem', padding: '2rem' }}>Nessun hotel trovato</h1>
@@ -152,6 +178,7 @@ function Hotel() {
                         config={config}
                         stelles={stelles}
                         setConfig={setConfig}
+                        datePickerOpen={datePickerOpen}
                     />
                 </>
             )}

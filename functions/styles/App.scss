@@ -697,6 +697,10 @@ input[type='date']:not(.has-value) {
     }
 }
 
+.custom-date-picker-container {
+    position: relative;
+    z-index: 9999;
+}
 // input[type='date']:not(.has-value):before {
 //     color: lightgrey;
 
@@ -1366,6 +1370,12 @@ input[type='date']:not(.has-value) {
     align-items: center;
     justify-content: space-between;
 }
+.bg-red {
+    background: rgb(212, 7, 7);
+}
+.text-white {
+    color: white;
+}
 .inquiry--form {
     padding: 24px;
     background: #ffffff;
@@ -1464,7 +1474,7 @@ textarea.__form-control {
     line-height: 22px;
 }
 .form--check {
-    display: flex;
+    display: flex !important;
     align-items: center;
     gap: 12px;
     .form-check-input {

@@ -9,23 +9,28 @@ import { FaqsItems } from './FaqsItems';
 import { AngleDown, AngleUp, Bus, Car, CheckIcon, NextIcon, PrevIcon, Ship, Train } from './Icon';
 import ViewInquiryForm from './ViewInquiryForm';
 import SelectDropDown from './SelectDropDown';
-const OfferPriceSlider = ({
-    offers,
-    serial,
-    setOfferButtonIn,
-    offerButtonIn,
-    hotel,
-    checkInDate,
-    checkOutDate,
-    setUserData,
-    userData,
-    sending,
-    setvalue,
-    value,
-    handleSubmit,
-    buttonDisabled,
-    handleUpdateRooms,
-}) => {
+const OfferPriceSlider = (
+    {
+        offers,
+        serial,
+        setOfferButtonIn,
+        offerButtonIn,
+        hotel,
+        checkInDate,
+        checkOutDate,
+        setUserData,
+        userData,
+        sending,
+        setvalue,
+        value,
+        handleSubmit,
+        buttonDisabled,
+        handleUpdateRooms,
+        setDatePickerOpen,
+        handleOfferClose,
+    },
+    ref
+) => {
     const [index, setIndex] = useState(0);
     const [innerCollapse, setInnerCollapse] = useState(false);
 
@@ -189,9 +194,9 @@ const OfferPriceSlider = ({
                                 style={{ margin: '1px' }}
                             >
                                 <div className="info">
-                                    <div className="duration">From</div>
+                                    <div className="duration">Dal</div>
                                     <div className="duration">
-                                        {item?.startDate} to {item?.endDate}
+                                        {item?.startDate} al {item?.endDate}
                                     </div>
                                     <div className="text--small">
                                         {item?.dateString} - {item.selectItems[item.selectedOption].text}
@@ -298,6 +303,13 @@ const OfferPriceSlider = ({
                     totalPriceForUser={activeData.selectItems[activeData.selectedOption].price.toFixed()}
                     buttonDisabled={buttonDisabled}
                     handleUpdateRooms={handleUpdateRooms}
+                    setDatePickerOpen={setDatePickerOpen}
+                    selectItems={activeData.selectItems}
+                    selectedPackage={activeData.selectItems[activeData.selectedOption]}
+                    handleOfferClose={handleOfferClose}
+                    setSelectedPackage={(i) => {
+                        handleSelectedItemChange(index, i);
+                    }}
                 />
             </div>
         </>
@@ -327,4 +339,4 @@ const infos = [
     },
 ];
 
-export default OfferPriceSlider;
+export default React.forwardRef(OfferPriceSlider);

@@ -19,10 +19,16 @@ export default function Calender({ handler, setCheckData, setConfig, config }) {
         month: firstMon.month + 1,
     });
 
+    const [firstSelection, setFirstSelection] = useState(true);
+
     const [selectDate, setSelectDate] = useState([config.checkInDate, config.checkOutDate]);
 
     const selectHandler = (e) => {
         setSelectDate((prev) => {
+            if (firstSelection) {
+                setFirstSelection(false);
+                return [e];
+            }
             if (prev.length === 0) {
                 return [e];
             } else if (prev.length === 1) {
@@ -74,7 +80,15 @@ export default function Calender({ handler, setCheckData, setConfig, config }) {
         };
         if (selectDate.length === 2) {
             setCheckData(data);
-            setConfig({ ...config, checkInDate: data.start, checkOutDate: data.end });
+            setConfig({
+                ...config,
+                checkInDate: data.start,
+                checkOutDate: data.end,
+                fascio: { name: 'Tutti', value: 0 },
+                distance: { name: 'Tutti', value: 0 },
+                comune: { name: "Tutta l'isola" },
+                stelle: { name: 'Tutti' },
+            });
             handler(false);
         }
     };

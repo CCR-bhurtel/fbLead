@@ -176,7 +176,7 @@ module.exports = catchAsync(async (req, res, next) => {
         if (hb && hb > 0) {
             selectItems.push({
                 price: getPriceForOfferWithBoardOption(hb, offer, 3),
-                text: 'Mexxa Pensione',
+                text: 'Mezza Pensione',
             });
         }
 
@@ -185,11 +185,11 @@ module.exports = catchAsync(async (req, res, next) => {
             selectedOption: 0,
 
             selectItems,
-            startDate: `${dateA.toLocaleDateString(undefined, {
+            startDate: `${dateA.toLocaleDateString('it-IT', {
                 day: 'numeric',
                 month: 'short',
             })}`,
-            endDate: `${dateB.toLocaleDateString(undefined, {
+            endDate: `${dateB.toLocaleDateString('it-IT', {
                 day: 'numeric',
                 month: 'short',
             })}`,

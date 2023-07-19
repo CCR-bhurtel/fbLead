@@ -5,7 +5,7 @@ import { Calendar, Dollar, FiveStar, Location, SearchIcon, Star, Stelle } from '
 
 import Calender from './calender/Calender';
 
-const Footer = ({ initialConfigData, config, setConfig, comunes }) => {
+const Footer = ({ initialConfigData, config, setConfig, comunes, datePickerOpen }) => {
     const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
     const handleKeyboardEvent = (event) => {
         setIsKeyboardOpen(event.detail.isKeyboardOpen);
@@ -52,14 +52,17 @@ const Footer = ({ initialConfigData, config, setConfig, comunes }) => {
     const { stelles, distances, fascio } = initialConfigData;
 
     return (
-        <footer style={{ position: isKeyboardOpen ? 'relative' : 'sticky' }}>
+        <footer style={{ position: isKeyboardOpen || datePickerOpen ? 'relative' : 'sticky' }}>
             {/* <EventListener
         target="window"
         onResize={handleKeyboardEvent}
         onScreenResize={handleKeyboardEvent}
       /> */}
             <div className="container-fluid">
-                <div style={{ zIndex: -1 }} className="footer-wrapper d-none d-sm-flex align-items-center justify-center">
+                <div
+                    style={{ zIndex: -1 }}
+                    className="footer-wrapper d-none d-sm-flex align-items-center justify-center"
+                >
                     {/* <DropdownGroup
                         handleChange={(value) => handleFooterConfig('comune', value)}
                         value={footerConfig.comune}
@@ -110,7 +113,7 @@ const Footer = ({ initialConfigData, config, setConfig, comunes }) => {
                             <Calendar />
                         </span>
                     </div>
-                    <div className="custom-dropdown" style={{marginLeft:"5rem"}}>
+                    <div className="custom-dropdown" style={{ marginLeft: '5rem' }}>
                         <label htmlFor="checkin">Check Out</label>
                         <input
                             type="text"
