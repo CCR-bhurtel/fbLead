@@ -38,7 +38,7 @@ app.prepare().then(() => {
     //     // Add your code here to perform the desired task
     // });
 });
-exports.nextServer = onRequest(server);
+exports.nextServer = onRequest({ cors: true }, server);
 
 process.on('uncaughtException', (err) => {
     console.log('Uncaught exception: shutting down the app');

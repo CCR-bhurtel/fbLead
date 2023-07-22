@@ -31,7 +31,7 @@ app.post('/api/enquiry', postEnquiry);
 app.use('/api/respond', authProtect, respondRouter);
 app.post('/api/respondwebhook', webhookController);
 
-app.use(cors({ origin: ['*'] }));
+app.use(cors());
 
 app.get('/facebookwebhook', (req, res) => {
     const mode = req.query['hub.mode'];

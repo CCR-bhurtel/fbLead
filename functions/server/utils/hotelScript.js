@@ -143,13 +143,13 @@ class HotelScript {
 
                     if (dataToReturn.offerteIds.length === records.length - errorCount) {
                         let min = 0;
-                        console.log(lowestPrices);
+                        // console.log(lowestPrices);
 
                         lowestPrices.sort((a, b) => a - b);
                         if (lowestPrices.length) min = lowestPrices[0];
 
                         dataToReturn.lowestPrice = min;
-                        console.log(dataToReturn);
+                        // console.log(dataToReturn);
                         resolve(dataToReturn);
                     }
                 } catch (err) {
@@ -162,21 +162,29 @@ class HotelScript {
 
     // delete offerta, create offerta and udate hotel with new offerta ids
     crudOperationsOnHotelWithOfferta = (hotels) => {
-        hotels.slice(20,hotels.length).forEach(async (hotel) => {
-            try {
-                if (hotel.Offerte) await this.deleteHotelOffertaRecords(hotel.Offerte);
+        let i = 0;
+        const crudInterval = setInterval(() => {
+            hotels.slice(i, i + 1).forEach(async (hotel) => {
+                try {
+                    if (hotel.Offerte) await this.deleteHotelOffertaRecords(hotel.Offerte);
 
-                const dataReturnedAfterCreatingOfferta = await this.createHotelOffertaRecords(hotel);
+                    const dataReturnedAfterCreatingOfferta = await this.createHotelOffertaRecords(hotel);
 
-                await this.updateHotelRecordWithOfferteIds(
-                    hotel.id,
-                    dataReturnedAfterCreatingOfferta.offerteIds,
-                    dataReturnedAfterCreatingOfferta.lowestPrice
-                );
-            } catch (err) {
-                console.log(err);
-            }
-        });
+                    await this.updateHotelRecordWithOfferteIds(
+                        hotel.id,
+                        dataReturnedAfterCreatingOfferta.offerteIds,
+                        dataReturnedAfterCreatingOfferta.lowestPrice
+                    );
+                } catch (err) {
+                    console.log(err);
+                }
+                i++;
+                if (i === hotels.length) {
+                    clearInterval(crudInterval);
+                    console.log('Hotel script ran successfully');
+                }
+            });
+        }, 5000);
     };
 
     updateHotelRecordWithOfferteIds = async (hotelId, offertaIds, lowestPrice) => {
